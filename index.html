@@ -55,6 +55,12 @@
             <span>Fiches de Paie</span>
           </a>
         </li>
+        <li class="nav-item" data-tab="rates">
+          <a class="nav-link">
+            <i class="fa-solid fa-percent"></i>
+            <span>Taux & Épargne</span>
+          </a>
+        </li>
         <li class="nav-item" data-tab="settings">
           <a class="nav-link">
             <i class="fa-solid fa-sliders"></i>
@@ -261,7 +267,72 @@
       </section>
 
       <!-- ============================================== -->
-      <!-- TAB 5: SETTINGS & DATA                         -->
+      <!-- TAB 5: RATES COMPARATOR                        -->
+      <!-- ============================================== -->
+      <section id="tab-rates" class="tab-panel">
+        <!-- Controls area -->
+        <div class="glass-panel" style="padding: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+            <div style="display: flex; align-items: center; gap: 16px; flex-grow: 1; max-width: 500px;">
+              <div class="form-group" style="margin-bottom:0; flex-grow: 1;">
+                <label for="rates-simulate-amount" style="margin-bottom: 6px;">Somme à placer pour la simulation (€)</label>
+                <input type="number" id="rates-simulate-amount" class="glass-input" value="10000" min="0" step="500">
+              </div>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <label class="card-task-label" style="font-size: 0.9rem;">
+                <input type="checkbox" id="rates-apply-tax" class="card-task-checkbox" checked>
+                <span>Déduire la Flat Tax française (30%) sur les livrets fiscalisés</span>
+              </label>
+              <span class="text-muted" style="font-size: 0.75rem;"><i class="fa-solid fa-clock"></i> Taux mis à jour en Juin 2026. Données publiques indicatives.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comparative Grid -->
+        <div class="dashboard-layout" style="grid-template-columns: 1fr 1fr;">
+          <!-- Regulated Savings -->
+          <div class="glass-panel">
+            <div class="card-header">
+              <h3 class="card-title"><i class="fa-solid fa-building-shield" style="color: var(--accent-cyan);"></i> Livrets Réglementés (Nets d'Impôts)</h3>
+            </div>
+            <div class="card-body">
+              <div class="finance-list-container" id="regulated-rates-list">
+                <!-- Regulated rates injected dynamically -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Commercial Savings / Boosted -->
+          <div class="glass-panel">
+            <div class="card-header">
+              <h3 class="card-title"><i class="fa-solid fa-percent" style="color: var(--accent-purple);"></i> Banques en Ligne & Comptes Rémunérés</h3>
+            </div>
+            <div class="card-body">
+              <div class="finance-list-container" id="commercial-rates-list">
+                <!-- Commercial rates injected dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Visual Analytics Chart -->
+        <div class="glass-panel">
+          <div class="card-header">
+            <h3 class="card-title">Comparaison des intérêts générés à 1 an</h3>
+            <i class="fa-solid fa-chart-simple text-muted"></i>
+          </div>
+          <div class="card-body">
+            <div class="chart-container" style="height: 300px;">
+              <canvas id="ratesComparisonChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB 6: SETTINGS & DATA                         -->
       <!-- ============================================== -->
       <section id="tab-settings" class="tab-panel">
         <div class="dashboard-layout" style="grid-template-columns: 1fr 1fr;">
