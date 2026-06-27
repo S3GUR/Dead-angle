@@ -2109,6 +2109,132 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Steam Profile Scraper (No API Key required)
+  const steamImportModal = document.getElementById('steam-import-modal');
+  const importProfileBtn = document.getElementById('import-profile-steam-btn');
+  const cancelImportBtn = document.getElementById('cancel-steam-import-modal');
+  const closeImportBtn = document.getElementById('close-steam-import-modal');
+  const confirmImportBtn = document.getElementById('confirm-steam-import-btn');
+
+  if (importProfileBtn && steamImportModal) {
+    importProfileBtn.addEventListener('click', () => {
+      steamImportModal.classList.add('active');
+    });
+  }
+
+  function closeImportModal() {
+    if (steamImportModal) steamImportModal.classList.remove('active');
+  }
+
+  if (cancelImportBtn) cancelImportBtn.addEventListener('click', closeImportModal);
+  if (closeImportBtn) closeImportBtn.addEventListener('click', closeImportModal);
+
+  if (confirmImportBtn) {
+    confirmImportBtn.addEventListener('click', () => {
+      let inputVal = document.getElementById('steam-profile-url').value.trim();
+      if (!inputVal) {
+        alert("Veuillez entrer un identifiant ou un lien de profil.");
+        return;
+      }
+
+      let profileName = inputVal;
+      let isNumericId = false;
+
+      // Extract username/ID64 from URL if provided
+      if (inputVal.includes('steamcommunity.com/id/')) {
+        profileName = inputVal.split('steamcommunity.com/id/')[1].split('/')[0];
+      } else if (inputVal.includes('steamcommunity.com/profiles/')) {
+        profileName = inputVal.split('steamcommunity.com/profiles/')[1].split('/')[0];
+        isNumericId = true;
+      } else if (/^\d{17}$/.test(inputVal)) {
+        isNumericId = true;
+      }
+
+      confirmImportBtn.disabled = true;
+      confirmImportBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Importation...`;
+
+      let targetUrl = '';
+      if (isNumericId) {
+        targetUrl = `https://steamcommunity.com/profiles/${profileName}/games/?tab=all`;
+      } else {
+        targetUrl = `https://steamcommunity.com/id/${profileName}/games/?tab=all`;
+      }
+
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+
+      fetch(proxyUrl)
+        .then(res => {
+          if (!res.ok) throw new Error("Erreur de connexion au proxy CORS.");
+          return res.json();
+        })
+        .then(data => {
+          const html = data.contents;
+          if (!html) throw new Error("Impossible de lire le contenu de la page.");
+
+          if (html.includes("The community member has not yet configured their Steam Community profile") || html.includes("profile is private")) {
+            throw new Error("Ce profil est privé ou n'existe pas. Veuillez vérifier les paramètres de confidentialité de votre compte Steam.");
+          }
+
+          const match = html.match(/var\s+rgGames\s*=\s*(\[.*?\])\s*;/);
+          if (!match) {
+            throw new Error("Impossible de trouver la liste de jeux. Assurez-vous que l'onglet 'Détails des jeux' est public sur votre profil Steam.");
+          }
+
+          const parsedGames = JSON.parse(match[1]);
+          if (!parsedGames || parsedGames.length === 0) {
+            throw new Error("Aucun jeu trouvé sur ce profil.");
+          }
+
+          if (!state.games) {
+            state.games = [];
+          }
+
+          let addedCount = 0;
+          let updatedCount = 0;
+
+          parsedGames.forEach(item => {
+            const appId = String(item.appid);
+            let playtime = 0;
+            if (item.hours_forever) {
+              playtime = Math.round(parseFloat(item.hours_forever.replace(/,/g, '')) || 0);
+            }
+
+            const existingIdx = state.games.findIndex(g => g.appId === appId);
+            if (existingIdx !== -1) {
+              state.games[existingIdx].playtime = playtime;
+              updatedCount++;
+            } else {
+              state.games.push({
+                id: 'game-' + Date.now() + '-' + appId,
+                name: item.name,
+                appId: appId,
+                playtime: playtime,
+                peakElo: 'Non classé',
+                achievementsUnlocked: 0,
+                achievementsTotal: 0
+              });
+              addedCount++;
+            }
+          });
+
+          saveState();
+          logActivity('games', `Importation Steam effectuée depuis le profil ${profileName} (${addedCount} ajoutés, ${updatedCount} mis à jour).`);
+          alert(`Importation réussie ! ${addedCount} nouveaux jeux ajoutés et ${updatedCount} mis à jour depuis le profil de ${profileName}.`);
+          
+          confirmImportBtn.disabled = false;
+          confirmImportBtn.innerHTML = "Lancer l'importation";
+          closeImportModal();
+          refreshView('games');
+        })
+        .catch(err => {
+          console.error(err);
+          alert(`Erreur d'importation : ${err.message}`);
+          confirmImportBtn.disabled = false;
+          confirmImportBtn.innerHTML = "Lancer l'importation";
+        });
+    });
+  }
+
   // Initial Load
   loadState();
   renderDashboard(); // Initial tab is dashboard

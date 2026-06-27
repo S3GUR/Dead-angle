@@ -392,9 +392,14 @@
       <section id="tab-games" class="tab-panel">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
           <h2 style="font-family: 'Outfit'; font-size: 1.5rem; color: #fff; margin:0;">Bibliothèque de Jeux</h2>
-          <button class="glass-button" id="sync-steam-btn" style="display: none; background: rgba(58, 134, 200, 0.2); border-color: var(--secondary);">
-            <i class="fa-brands fa-steam"></i> Synchroniser Steam
-          </button>
+          <div style="display: flex; gap: 10px;">
+            <button class="glass-button" id="import-profile-steam-btn" style="background: rgba(58, 134, 200, 0.15); border-color: var(--secondary);">
+              <i class="fa-brands fa-steam"></i> Importer via Profil Steam
+            </button>
+            <button class="glass-button" id="sync-steam-btn" style="display: none; background: rgba(58, 134, 200, 0.25); border-color: var(--secondary);">
+              <i class="fa-brands fa-steam"></i> Synchroniser (Clé API)
+            </button>
+          </div>
         </div>
         
         <div class="project-grid" id="games-grid">
@@ -785,6 +790,31 @@
           <button type="submit" class="glass-button primary">Enregistrer</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: STEAM PROFILE IMPORT                    -->
+  <!-- ============================================== -->
+  <div class="modal-overlay" id="steam-import-modal">
+    <div class="modal-content glass-panel" style="max-width: 450px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Importer depuis un profil Steam</h3>
+        <button class="modal-close" id="close-steam-import-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted" style="font-size: 0.9rem; line-height: 1.5; margin-bottom: 16px;">
+          Entrez votre lien de profil Steam public ou votre identifiant personnalisé (ex : <code>https://steamcommunity.com/id/Wiseee/</code>). Vos détails de jeux doivent être configurés en <strong>Public</strong> dans les paramètres de confidentialité Steam.
+        </p>
+        <div class="form-group">
+          <label for="steam-profile-url">Lien du profil ou Identifiant *</label>
+          <input type="text" id="steam-profile-url" class="glass-input" placeholder="ex: Wiseee ou https://steamcommunity.com/id/Wiseee/" value="Wiseee" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="glass-button" id="cancel-steam-import-modal">Annuler</button>
+        <button type="button" class="glass-button primary" id="confirm-steam-import-btn">Lancer l'importation</button>
+      </div>
     </div>
   </div>
 
