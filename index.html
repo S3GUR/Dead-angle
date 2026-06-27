@@ -209,6 +209,7 @@
                 <button class="finance-nav-btn" data-category="savings">Épargne</button>
                 <button class="finance-nav-btn" data-category="investment">Investissements</button>
                 <button class="finance-nav-btn" data-category="asset">Biens Matériels</button>
+                <button class="finance-nav-btn" data-category="flows">Flux Récurrents</button>
               </div>
               <button class="glass-button secondary" id="add-finance-btn">
                 <i class="fa-solid fa-plus"></i> Ajouter un actif
@@ -364,6 +365,31 @@
             <label for="project-deadline">Date Limite</label>
             <input type="date" id="project-deadline" class="glass-input">
           </div>
+
+          <!-- Project Tasks Checklist Manager -->
+          <div style="margin-top: 20px; border-top: 1px solid var(--border-glass); padding-top: 16px;">
+            <label style="font-size: 0.9rem; font-weight: 600; color: var(--text-main); margin-bottom: 12px; display: block;">Tâches du projet (Checklist)</label>
+            <div id="modal-tasks-container" style="display:flex; flex-direction:column; gap:10px; margin-bottom:15px; max-height:160px; overflow-y:auto; padding-right:4px;">
+              <!-- Tasks will be listed here with a delete icon -->
+            </div>
+            
+            <div class="form-row" style="grid-template-columns: 2fr 1fr auto; gap: 8px; align-items: flex-end; margin-bottom: 0;">
+              <div class="form-group" style="margin-bottom:0;">
+                <input type="text" id="new-task-name" class="glass-input" style="padding: 10px;" placeholder="Nouvelle tâche...">
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <select id="new-task-priority" class="glass-select" style="padding: 10px;">
+                  <option value="low">Faible</option>
+                  <option value="medium" selected>Moyenne</option>
+                  <option value="high">Haute</option>
+                </select>
+              </div>
+              <button type="button" class="glass-button" id="add-task-to-project-btn" style="padding: 11px 16px;"><i class="fa-solid fa-plus"></i></button>
+            </div>
+            <p class="text-muted" style="font-size: 0.75rem; margin-top: 8px;">
+              <i class="fa-solid fa-circle-info"></i> La progression (%) sera calculée automatiquement si des tâches sont créées.
+            </p>
+          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="glass-button" id="cancel-project-modal">Annuler</button>
@@ -482,6 +508,54 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="glass-button" id="cancel-payslip-modal">Annuler</button>
+          <button type="submit" class="glass-button primary">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: ADD / EDIT RECURRING FLOW               -->
+  <!-- ============================================== -->
+  <div class="modal-overlay" id="flow-modal">
+    <div class="modal-content glass-panel">
+      <div class="modal-header">
+        <h3 class="modal-title" id="flow-modal-title">Ajouter un flux récurrent</h3>
+        <button class="modal-close" id="close-flow-modal">&times;</button>
+      </div>
+      <form id="flow-form">
+        <input type="hidden" id="flow-id">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="flow-name">Nom du flux *</label>
+            <input type="text" id="flow-name" class="glass-input" placeholder="ex: Loyer, Abonnement Netflix, Salaire freelance..." required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="flow-type">Type *</label>
+              <select id="flow-type" class="glass-select" required>
+                <option value="inflow">Entrée (+)</option>
+                <option value="outflow">Sortie (-)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="flow-frequency">Fréquence *</label>
+              <select id="flow-frequency" class="glass-select" required>
+                <option value="weekly">Hebdomadaire</option>
+                <option value="monthly" selected>Mensuel</option>
+                <option value="yearly">Annuel</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="flow-amount">Montant (€) *</label>
+            <input type="number" id="flow-amount" class="glass-input" step="0.01" min="0" placeholder="ex: 1500" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="glass-button" id="cancel-flow-modal">Annuler</button>
           <button type="submit" class="glass-button primary">Enregistrer</button>
         </div>
       </form>

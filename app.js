@@ -10,30 +10,44 @@ document.addEventListener('DOMContentLoaded', () => {
         name: 'Aménager le bureau de mes rêves',
         description: 'Acheter un bureau assis-debout, installer des étagères et un éclairage LED personnalisé pour optimiser ma productivité.',
         status: 'in-progress',
-        progress: 35,
+        progress: 33,
         timeSpent: 12.0,
         deadline: '2026-08-15',
-        budget: 1200
+        budget: 1200,
+        tasks: [
+          { id: 't1', name: 'Acheter un bureau assis-debout', completed: true, priority: 'high' },
+          { id: 't2', name: 'Installer des étagères', completed: false, priority: 'medium' },
+          { id: 't3', name: 'Configurer l\'éclairage LED', completed: false, priority: 'low' }
+        ]
       },
       {
         id: 'proj-2',
         name: 'Créer un tracker personnel (Wink)',
         description: 'Développer une interface web élégante en verre dépoli (glassmorphism) pour centraliser le suivi des projets de vie et de mon patrimoine financier.',
         status: 'in-progress',
-        progress: 85,
+        progress: 67,
         timeSpent: 24.5,
         deadline: '2026-07-10',
-        budget: 0
+        budget: 0,
+        tasks: [
+          { id: 't4', name: 'Établir la maquette visuelle', completed: true, priority: 'high' },
+          { id: 't5', name: 'Développer le HTML et le CSS', completed: true, priority: 'medium' },
+          { id: 't6', name: 'Écrire la logique JS et connecter le LocalStorage', completed: false, priority: 'high' }
+        ]
       },
       {
         id: 'proj-3',
         name: 'Objectif Semi-Marathon',
         description: 'Programme de course de 12 semaines pour courir 21km sous la barre symbolique des 2 heures. Achat de chaussures neuves inclus.',
         status: 'not-started',
-        progress: 10,
+        progress: 50,
         timeSpent: 4.0,
         deadline: '2026-10-18',
-        budget: 150
+        budget: 150,
+        tasks: [
+          { id: 't7', name: 'Trouver un plan d\'entraînement', completed: true, priority: 'high' },
+          { id: 't8', name: 'Acheter de nouvelles baskets', completed: false, priority: 'medium' }
+        ]
       }
     ],
     finances: [
@@ -88,6 +102,43 @@ document.addEventListener('DOMContentLoaded', () => {
         hours: 151.67
       }
     ],
+    recurringFlows: [
+      {
+        id: 'flow-1',
+        name: 'Salaire CDI',
+        type: 'inflow',
+        amount: 2680.00,
+        frequency: 'monthly'
+      },
+      {
+        id: 'flow-2',
+        name: 'Loyer & Charges',
+        type: 'outflow',
+        amount: 750.00,
+        frequency: 'monthly'
+      },
+      {
+        id: 'flow-3',
+        name: 'Abonnement Netflix',
+        type: 'outflow',
+        amount: 13.49,
+        frequency: 'monthly'
+      },
+      {
+        id: 'flow-4',
+        name: 'Assurance Voiture',
+        type: 'outflow',
+        amount: 450.00,
+        frequency: 'yearly'
+      },
+      {
+        id: 'flow-5',
+        name: 'Freelancing Mobile App',
+        type: 'inflow',
+        amount: 150.00,
+        frequency: 'weekly'
+      }
+    ],
     activities: [
       {
         id: 'act-1',
@@ -123,6 +174,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (saved) {
       try {
         state = JSON.parse(saved);
+        if (!state.recurringFlows) {
+          state.recurringFlows = JSON.parse(JSON.stringify(DEFAULT_STATE.recurringFlows));
+        }
+        state.projects.forEach(p => {
+          if (!p.tasks) p.tasks = [];
+        });
       } catch (e) {
         console.error("Erreur de lecture du localStorage, chargement des données par défaut", e);
         state = JSON.parse(JSON.stringify(DEFAULT_STATE));
@@ -395,6 +452,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const deadlineText = proj.deadline ? new Date(proj.deadline).toLocaleDateString('fr-FR', {month: 'short', day: 'numeric', year: 'numeric'}) : 'Sans limite';
       const budgetText = proj.budget > 0 ? formatMoney(proj.budget) : 'Aucun';
+      const completedTasks = proj.tasks ? proj.tasks.filter(t => t.completed).length : 0;
+      const totalTasks = proj.tasks ? proj.tasks.length : 0;
 
       card.innerHTML = `
         <div class="project-card-header">
@@ -430,7 +489,17 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         </div>
 
-        <div class="project-card-footer">
+        <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
+          <button class="card-tasks-toggle-btn" data-id="${proj.id}">
+            <i class="fa-solid fa-chevron-down"></i>
+            <span>Tâches (${completedTasks}/${totalTasks})</span>
+          </button>
+        </div>
+        <div class="card-tasks-wrapper" id="tasks-wrapper-${proj.id}">
+          <!-- Tasks list loaded dynamically below -->
+        </div>
+
+        <div class="project-card-footer" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.05);">
           <!-- Quick hours update UI -->
           <div class="time-spent-input-group">
             <button class="time-spent-btn dec-hours-btn" data-id="${proj.id}">-</button>
@@ -450,6 +519,25 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
 
       container.appendChild(card);
+
+      // Render tasks in wrapper
+      const tasksWrapper = card.querySelector(`#tasks-wrapper-${proj.id}`);
+      if (proj.tasks && proj.tasks.length > 0) {
+        proj.tasks.forEach(task => {
+          const taskRow = document.createElement('div');
+          taskRow.className = `card-task-row ${task.completed ? 'completed' : ''}`;
+          taskRow.innerHTML = `
+            <label class="card-task-label">
+              <input type="checkbox" class="card-task-checkbox" data-proj-id="${proj.id}" data-task-id="${task.id}" ${task.completed ? 'checked' : ''}>
+              <span>${task.name}</span>
+            </label>
+            <span class="priority-dot ${task.priority}" title="Priorité : ${task.priority}"></span>
+          `;
+          tasksWrapper.appendChild(taskRow);
+        });
+      } else {
+        tasksWrapper.innerHTML = `<div style="font-size:0.75rem; color:var(--text-dark); text-align:center; padding:8px;">Aucune tâche définie.</div>`;
+      }
     });
 
     // Add listeners to inside elements
@@ -480,6 +568,33 @@ document.addEventListener('DOMContentLoaded', () => {
         deleteProject(id);
       });
     });
+
+    // Toggle tasks list expand
+    container.querySelectorAll('.card-tasks-toggle-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = e.currentTarget.getAttribute('data-id');
+        const wrapper = container.querySelector(`#tasks-wrapper-${id}`);
+        const icon = e.currentTarget.querySelector('i');
+        
+        wrapper.classList.toggle('expanded');
+        if (wrapper.classList.contains('expanded')) {
+          icon.className = 'fa-solid fa-chevron-up';
+        } else {
+          icon.className = 'fa-solid fa-chevron-down';
+        }
+      });
+    });
+
+    // Checkbox toggle handler
+    container.querySelectorAll('.card-task-checkbox').forEach(chk => {
+      chk.addEventListener('change', (e) => {
+        const projId = e.target.getAttribute('data-proj-id');
+        const taskId = e.target.getAttribute('data-task-id');
+        const checked = e.target.checked;
+        
+        toggleCardTask(projId, taskId, checked);
+      });
+    });
   }
 
   function adjustProjectHours(id, amount) {
@@ -508,7 +623,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  document.getElementById('add-finance-btn').addEventListener('click', () => openFinanceModal());
+  document.getElementById('add-finance-btn').addEventListener('click', () => {
+    if (currentFinanceCategory === 'flows') {
+      openFlowModal();
+    } else {
+      openFinanceModal();
+    }
+  });
 
   function renderFinances() {
     const container = document.getElementById('finances-container');
@@ -517,6 +638,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // Calcul Total Right Panel (toujours calculer en premier pour maintenir le solde à jour)
     const totalAssets = state.finances.reduce((acc, curr) => acc + parseFloat(curr.balance), 0);
     document.getElementById('total-assets-value').innerText = formatMoney(totalAssets);
+
+    const addBtn = document.getElementById('add-finance-btn');
+    if (currentFinanceCategory === 'flows') {
+      addBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Ajouter un flux';
+    } else {
+      addBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Ajouter un actif';
+    }
+
+    if (currentFinanceCategory === 'flows') {
+      renderRecurringFlows(container);
+      return;
+    }
 
     let filtered = state.finances;
     if (currentFinanceCategory !== 'all') {
@@ -601,6 +734,126 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Render breakdown chart
     renderFinanceCharts();
+  }
+
+  function renderRecurringFlows(container) {
+    container.innerHTML = '';
+    
+    const flows = state.recurringFlows || [];
+    
+    // Normalization helper to monthly value
+    function getMonthlyEquivalent(flow) {
+      const val = parseFloat(flow.amount);
+      if (flow.frequency === 'weekly') return val * 4.333;
+      if (flow.frequency === 'yearly') return val / 12;
+      return val; // monthly
+    }
+    
+    const totalInflows = flows.filter(f => f.type === 'inflow').reduce((acc, curr) => acc + getMonthlyEquivalent(curr), 0);
+    const totalOutflows = flows.filter(f => f.type === 'outflow').reduce((acc, curr) => acc + getMonthlyEquivalent(curr), 0);
+    const netSavingsCapacity = totalInflows - totalOutflows;
+    
+    // Generate flow summary layout
+    const summaryCard = document.createElement('div');
+    summaryCard.className = 'glass-panel';
+    summaryCard.style.padding = '20px';
+    summaryCard.style.marginBottom = '20px';
+    summaryCard.style.display = 'flex';
+    summaryCard.style.flexDirection = 'column';
+    summaryCard.style.gap = '12px';
+    
+    const expenseRatio = totalInflows > 0 ? Math.min(100, Math.round((totalOutflows / totalInflows) * 100)) : 0;
+    
+    summaryCard.innerHTML = `
+      <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 16px; text-align:center;">
+        <div>
+          <span style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Revenus Mensuels</span>
+          <h4 style="font-family:'Outfit'; font-size:1.25rem; color:var(--success); font-weight:700; margin-top:4px;">+ ${formatMoney(totalInflows)}</h4>
+        </div>
+        <div>
+          <span style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Dépenses Mensuelles</span>
+          <h4 style="font-family:'Outfit'; font-size:1.25rem; color:var(--accent-pink); font-weight:700; margin-top:4px;">- ${formatMoney(totalOutflows)}</h4>
+        </div>
+        <div>
+          <span style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Capacité d'Épargne</span>
+          <h4 style="font-family:'Outfit'; font-size:1.25rem; color:${netSavingsCapacity >= 0 ? 'var(--accent-cyan)' : 'var(--danger)'}; font-weight:700; margin-top:4px;">${formatMoney(netSavingsCapacity)}</h4>
+        </div>
+      </div>
+      
+      <div style="border-top:1px dashed var(--border-glass); padding-top:12px; display:flex; flex-direction:column; gap:6px;">
+        <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
+          <span>Taux d'engagement des revenus</span>
+          <span>${expenseRatio}% des revenus</span>
+        </div>
+        <div class="progress-bar-container" style="height:6px;">
+          <div class="progress-bar-fill" style="width: ${expenseRatio}%; background: ${expenseRatio > 80 ? 'var(--danger)' : 'linear-gradient(90deg, var(--secondary), var(--primary))'};"></div>
+        </div>
+      </div>
+    `;
+    
+    container.appendChild(summaryCard);
+    
+    if (flows.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.innerHTML = `
+        <i class="fa-solid fa-money-bill-transfer"></i>
+        <p class="empty-state-title">Aucun flux récurrent enregistré</p>
+        <p class="empty-state-desc">Entrez vos charges fixes (loyer, abonnements) et vos rentrées régulières pour visualiser votre capacité d'épargne réelle.</p>
+      `;
+      container.appendChild(empty);
+      return;
+    }
+    
+    // Render each flow
+    const frequencies = { weekly: 'Hebdomadaire', monthly: 'Mensuel', yearly: 'Annuel' };
+    
+    flows.forEach(flow => {
+      const row = document.createElement('div');
+      row.className = `finance-item-row ${flow.type}`;
+      
+      const icon = flow.type === 'inflow' ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down';
+      
+      row.innerHTML = `
+        <div class="finance-item-info">
+          <div class="finance-item-icon ${flow.type}">
+            <i class="fa-solid ${icon}"></i>
+          </div>
+          <div class="finance-item-details">
+            <span class="finance-item-name">${flow.name}</span>
+            <span class="finance-item-meta">${frequencies[flow.frequency]} • Équivalent : ${formatMoney(getMonthlyEquivalent(flow))}/mois</span>
+          </div>
+        </div>
+
+        <div class="finance-item-value-area">
+          <span class="finance-item-value">${flow.type === 'inflow' ? '+' : '-'} ${formatMoney(flow.amount)}</span>
+          <div class="project-actions">
+            <button class="action-btn edit-flow-btn" data-id="${flow.id}" title="Modifier">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+            <button class="action-btn delete delete-flow-btn" data-id="${flow.id}" title="Supprimer">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+      `;
+      container.appendChild(row);
+    });
+    
+    // Bind listeners
+    container.querySelectorAll('.edit-flow-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = e.currentTarget.getAttribute('data-id');
+        openFlowModal(id);
+      });
+    });
+    
+    container.querySelectorAll('.delete-flow-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = e.currentTarget.getAttribute('data-id');
+        deleteFlow(id);
+      });
+    });
   }
 
   // 4. PAYSLIPS VIEW
@@ -864,11 +1117,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // -- Project Modals
   const projectModal = document.getElementById('project-modal');
   const projectForm = document.getElementById('project-form');
+  let modalTasks = [];
   
   function openProjectModal(id = null) {
     projectForm.reset();
     document.getElementById('project-id').value = '';
     document.getElementById('project-modal-title').innerText = "Créer un nouveau projet";
+    modalTasks = [];
     
     if (id) {
       const proj = state.projects.find(p => p.id === id);
@@ -882,8 +1137,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('project-budget').value = proj.budget || 0;
         document.getElementById('project-deadline').value = proj.deadline || '';
         document.getElementById('project-modal-title').innerText = "Modifier le projet";
+        
+        modalTasks = proj.tasks ? [ ...proj.tasks ] : [];
       }
     }
+    renderModalTasks();
     projectModal.classList.add('active');
   }
 
@@ -893,6 +1151,72 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('close-project-modal').addEventListener('click', closeProjectModal);
   document.getElementById('cancel-project-modal').addEventListener('click', closeProjectModal);
+
+  function renderModalTasks() {
+    const container = document.getElementById('modal-tasks-container');
+    container.innerHTML = '';
+    
+    if (modalTasks.length === 0) {
+      container.innerHTML = `<div style="font-size:0.8rem; color:var(--text-dark); text-align:center; padding:10px;">Aucune tâche créée pour ce projet.</div>`;
+      return;
+    }
+    
+    modalTasks.forEach((task, idx) => {
+      const row = document.createElement('div');
+      row.className = 'modal-task-item';
+      
+      row.innerHTML = `
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="priority-dot ${task.priority}"></span>
+          <span style="${task.completed ? 'text-decoration:line-through; color:var(--text-dark);' : ''}">${task.name}</span>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input type="checkbox" class="modal-task-chk" data-index="${idx}" ${task.completed ? 'checked' : ''} style="cursor:pointer;">
+          <button type="button" class="action-btn delete remove-modal-task-btn" data-index="${idx}">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
+      `;
+      container.appendChild(row);
+    });
+    
+    // Bind modal checkbox change
+    container.querySelectorAll('.modal-task-chk').forEach(chk => {
+      chk.addEventListener('change', (e) => {
+        const idx = parseInt(e.target.getAttribute('data-index'));
+        modalTasks[idx].completed = e.target.checked;
+        renderModalTasks();
+      });
+    });
+
+    // Bind modal task remove
+    container.querySelectorAll('.remove-modal-task-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const idx = parseInt(e.currentTarget.getAttribute('data-index'));
+        modalTasks.splice(idx, 1);
+        renderModalTasks();
+      });
+    });
+  }
+
+  document.getElementById('add-task-to-project-btn').addEventListener('click', () => {
+    const taskNameInput = document.getElementById('new-task-name');
+    const prioritySelect = document.getElementById('new-task-priority');
+    const name = taskNameInput.value.trim();
+    const priority = prioritySelect.value;
+    
+    if (name) {
+      modalTasks.push({
+        id: 't-' + Date.now(),
+        name,
+        completed: false,
+        priority
+      });
+      taskNameInput.value = '';
+      prioritySelect.value = 'medium';
+      renderModalTasks();
+    }
+  });
   
   projectForm.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -900,16 +1224,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const name = document.getElementById('project-name').value.trim();
     const description = document.getElementById('project-desc').value.trim();
     const status = document.getElementById('project-status').value;
-    const progress = parseInt(document.getElementById('project-progress').value) || 0;
+    let progress = parseInt(document.getElementById('project-progress').value) || 0;
     const timeSpent = parseFloat(document.getElementById('project-time-spent').value) || 0;
     const budget = parseFloat(document.getElementById('project-budget').value) || 0;
     const deadline = document.getElementById('project-deadline').value;
+
+    if (modalTasks.length > 0) {
+      const completedCount = modalTasks.filter(t => t.completed).length;
+      progress = Math.round((completedCount / modalTasks.length) * 100);
+    }
 
     if (id) {
       // Edit
       const idx = state.projects.findIndex(p => p.id === id);
       if (idx !== -1) {
-        state.projects[idx] = { ...state.projects[idx], name, description, status, progress, timeSpent, budget, deadline };
+        state.projects[idx] = { ...state.projects[idx], name, description, status, progress, timeSpent, budget, deadline, tasks: modalTasks };
         logActivity('project', `Projet '${name}' mis à jour.`);
       }
     } else {
@@ -922,7 +1251,8 @@ document.addEventListener('DOMContentLoaded', () => {
         progress,
         timeSpent,
         budget,
-        deadline
+        deadline,
+        tasks: modalTasks
       };
       state.projects.push(newProj);
       logActivity('project', `Projet '${name}' créé.`);
@@ -940,6 +1270,24 @@ document.addEventListener('DOMContentLoaded', () => {
       logActivity('project', `Projet '${proj.name}' supprimé.`);
       saveState();
       refreshView('projects');
+    }
+  }
+
+  function toggleCardTask(projId, taskId, checked) {
+    const projIdx = state.projects.findIndex(p => p.id === projId);
+    if (projIdx !== -1) {
+      const taskIdx = state.projects[projIdx].tasks.findIndex(t => t.id === taskId);
+      if (taskIdx !== -1) {
+        state.projects[projIdx].tasks[taskIdx].completed = checked;
+        
+        // Recalculate progress automatically
+        const tasks = state.projects[projIdx].tasks;
+        const completedCount = tasks.filter(t => t.completed).length;
+        state.projects[projIdx].progress = Math.round((completedCount / tasks.length) * 100);
+        
+        saveState();
+        refreshView('projects');
+      }
     }
   }
 
@@ -1132,6 +1480,83 @@ document.addEventListener('DOMContentLoaded', () => {
       refreshView(document.querySelector('.nav-item.active').getAttribute('data-tab'));
     }
   });
+
+  // -- Recurring Flow Modals
+  const flowModal = document.getElementById('flow-modal');
+  const flowForm = document.getElementById('flow-form');
+
+  function openFlowModal(id = null) {
+    flowForm.reset();
+    document.getElementById('flow-id').value = '';
+    document.getElementById('flow-modal-title').innerText = "Ajouter un flux récurrent";
+
+    if (id) {
+      const flow = state.recurringFlows.find(f => f.id === id);
+      if (flow) {
+        document.getElementById('flow-id').value = flow.id;
+        document.getElementById('flow-name').value = flow.name;
+        document.getElementById('flow-type').value = flow.type;
+        document.getElementById('flow-frequency').value = flow.frequency;
+        document.getElementById('flow-amount').value = flow.amount;
+        document.getElementById('flow-modal-title').innerText = "Modifier le flux récurrent";
+      }
+    }
+    flowModal.classList.add('active');
+  }
+
+  function closeFlowModal() {
+    flowModal.classList.remove('active');
+  }
+
+  document.getElementById('close-flow-modal').addEventListener('click', closeFlowModal);
+  document.getElementById('cancel-flow-modal').addEventListener('click', closeFlowModal);
+
+  flowForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const id = document.getElementById('flow-id').value;
+    const name = document.getElementById('flow-name').value.trim();
+    const type = document.getElementById('flow-type').value;
+    const frequency = document.getElementById('flow-frequency').value;
+    const amount = parseFloat(document.getElementById('flow-amount').value) || 0;
+
+    if (!state.recurringFlows) {
+      state.recurringFlows = [];
+    }
+
+    if (id) {
+      // Edit
+      const idx = state.recurringFlows.findIndex(f => f.id === id);
+      if (idx !== -1) {
+        state.recurringFlows[idx] = { ...state.recurringFlows[idx], name, type, frequency, amount };
+        logActivity('finance', `Flux récurrent '${name}' mis à jour.`);
+      }
+    } else {
+      // Add
+      const newFlow = {
+        id: 'flow-' + Date.now(),
+        name,
+        type,
+        frequency,
+        amount
+      };
+      state.recurringFlows.push(newFlow);
+      logActivity('finance', `Flux récurrent '${name}' enregistré.`);
+    }
+
+    saveState();
+    closeFlowModal();
+    refreshView('finances');
+  });
+
+  function deleteFlow(id) {
+    const flow = state.recurringFlows.find(f => f.id === id);
+    if (flow && confirm(`Voulez-vous vraiment retirer le flux récurrent "${flow.name}" ?`)) {
+      state.recurringFlows = state.recurringFlows.filter(f => f.id !== id);
+      logActivity('finance', `Retrait du flux récurrent '${flow.name}'.`);
+      saveState();
+      refreshView('finances');
+    }
+  }
 
   // Initial Load
   loadState();
