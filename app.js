@@ -240,6 +240,30 @@ document.addEventListener('DOMContentLoaded', () => {
     saveState();
   }
 
+  // Helper to fetch data via CORS proxies with fallback to ensure high reliability
+  function fetchWithProxy(url) {
+    const primaryProxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    
+    return fetch(primaryProxy)
+      .then(res => {
+        if (!res.ok) throw new Error("Primary CORS proxy returned status " + res.status);
+        return res.json().then(data => {
+          if (data && data.contents !== null && data.contents !== undefined) {
+            return data.contents;
+          }
+          throw new Error("Empty contents from primary proxy");
+        });
+      })
+      .catch(err => {
+        console.warn("Primary CORS proxy failed, trying fallback...", err);
+        const fallbackProxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+        return fetch(fallbackProxy).then(res => {
+          if (!res.ok) throw new Error("Fallback CORS proxy returned status " + res.status);
+          return res.text();
+        });
+      });
+  }
+
   // --- Helper utility for money formatting
   function formatMoney(amount) {
     return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount);
@@ -2044,15 +2068,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const steamId = state.steamConfig.steamId;
 
       const ownedGamesUrl = `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${apiKey}&steamid=${steamId}&format=json`;
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(ownedGamesUrl)}`;
 
-      fetch(proxyUrl)
-        .then(response => {
-          if (!response.ok) throw new Error("Erreur de connexion au proxy.");
-          return response.json();
-        })
-        .then(data => {
-          const result = JSON.parse(data.contents);
+      fetchWithProxy(ownedGamesUrl)
+        .then(contents => {
+          const result = JSON.parse(contents);
           if (!result.response || !result.response.games) {
             throw new Error("Aucun jeu trouvé ou profil privé.");
           }
@@ -2072,12 +2091,10 @@ document.addEventListener('DOMContentLoaded', () => {
               syncCount++;
 
               const achievementsUrl = `https://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v1/?key=${apiKey}&steamid=${steamId}&appid=${game.appId}`;
-              const achievementsProxy = `https://api.allorigins.win/get?url=${encodeURIComponent(achievementsUrl)}`;
 
-              const achPromise = fetch(achievementsProxy)
-                .then(res => res.json())
-                .then(achData => {
-                  const achResult = JSON.parse(achData.contents);
+              const achPromise = fetchWithProxy(achievementsUrl)
+                .then(achContents => {
+                  const achResult = JSON.parse(achContents);
                   if (achResult.playerstats && achResult.playerstats.achievements) {
                     const achievements = achResult.playerstats.achievements;
                     game.achievementsTotal = achievements.length;
@@ -2179,15 +2196,9 @@ document.addEventListener('DOMContentLoaded', () => {
         resolveIdPromise = Promise.resolve(profileName);
       } else {
         const resolveUrl = `https://steamcommunity.com/id/${profileName}/?xml=1`;
-        const resolveProxy = `https://api.allorigins.win/get?url=${encodeURIComponent(resolveUrl)}`;
         
-        resolveIdPromise = fetch(resolveProxy)
-          .then(res => {
-            if (!res.ok) throw new Error("Erreur de connexion au proxy CORS.");
-            return res.json();
-          })
-          .then(data => {
-            const html = data.contents;
+        resolveIdPromise = fetchWithProxy(resolveUrl)
+          .then(html => {
             const idMatch = html.match(/<steamID64>(\d+)<\/steamID64>/);
             if (!idMatch) {
               throw new Error("Impossible de résoudre le pseudo Steam. Vérifiez que le profil existe et n'est pas complètement privé.");
@@ -2207,16 +2218,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
           // Fetch games via Steam Web API using the user's API Key (including app details like names/icons)
           const ownedGamesUrl = `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${apiKey}&steamid=${steamId}&include_appinfo=true&format=json`;
-          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(ownedGamesUrl)}`;
 
-          return fetch(proxyUrl);
+          return fetchWithProxy(ownedGamesUrl);
         })
-        .then(res => {
-          if (!res.ok) throw new Error("Le serveur Steam a refusé la clé API ou la requête.");
-          return res.json();
-        })
-        .then(data => {
-          const result = JSON.parse(data.contents);
+        .then(contents => {
+          const result = JSON.parse(contents);
           if (!result.response || !result.response.games) {
             throw new Error("Aucun jeu trouvé ou profil privé. Vérifiez que vos 'Détails des jeux' sont bien configurés sur 'Public' dans vos paramètres Steam.");
           }
