@@ -2109,7 +2109,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Steam Profile Scraper (No API Key required)
+  // Steam Profile Scraper & API-Key Integrated Import
   const steamImportModal = document.getElementById('steam-import-modal');
   const importProfileBtn = document.getElementById('import-profile-steam-btn');
   const cancelImportBtn = document.getElementById('cancel-steam-import-modal');
@@ -2118,6 +2118,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (importProfileBtn && steamImportModal) {
     importProfileBtn.addEventListener('click', () => {
+      // Pre-fill API key input if it exists in state
+      const apiInput = document.getElementById('steam-import-api-key');
+      if (apiInput && state.steamConfig && state.steamConfig.apiKey) {
+        apiInput.value = state.steamConfig.apiKey;
+      }
       steamImportModal.classList.add('active');
     });
   }
@@ -2132,15 +2137,30 @@ document.addEventListener('DOMContentLoaded', () => {
   if (confirmImportBtn) {
     confirmImportBtn.addEventListener('click', () => {
       let inputVal = document.getElementById('steam-profile-url').value.trim();
+      let modalApiKey = document.getElementById('steam-import-api-key').value.trim();
+
+      const apiKey = modalApiKey || (state.steamConfig ? state.steamConfig.apiKey : '');
+      if (!apiKey) {
+        alert("Une clé API Steam Web est requise pour importer les jeux. Veuillez en renseigner une dans le champ prévu à cet effet.");
+        return;
+      }
+
       if (!inputVal) {
         alert("Veuillez entrer un identifiant ou un lien de profil.");
         return;
       }
 
+      // Save key to config
+      if (modalApiKey) {
+        if (!state.steamConfig) state.steamConfig = {};
+        state.steamConfig.apiKey = modalApiKey;
+        saveState();
+      }
+
       let profileName = inputVal;
       let isNumericId = false;
 
-      // Extract username/ID64 from URL if provided
+      // Extract profile name/id from URL
       if (inputVal.includes('steamcommunity.com/id/')) {
         profileName = inputVal.split('steamcommunity.com/id/')[1].split('/')[0];
       } else if (inputVal.includes('steamcommunity.com/profiles/')) {
@@ -2151,40 +2171,57 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       confirmImportBtn.disabled = true;
-      confirmImportBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Importation...`;
+      confirmImportBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Résolution du profil...`;
 
-      let targetUrl = '';
+      // Resolve custom URL to numeric steamID64 using public XML profile page (which doesn't require login)
+      let resolveIdPromise;
       if (isNumericId) {
-        targetUrl = `https://steamcommunity.com/profiles/${profileName}/games/?tab=all`;
+        resolveIdPromise = Promise.resolve(profileName);
       } else {
-        targetUrl = `https://steamcommunity.com/id/${profileName}/games/?tab=all`;
+        const resolveUrl = `https://steamcommunity.com/id/${profileName}/?xml=1`;
+        const resolveProxy = `https://api.allorigins.win/get?url=${encodeURIComponent(resolveUrl)}`;
+        
+        resolveIdPromise = fetch(resolveProxy)
+          .then(res => {
+            if (!res.ok) throw new Error("Erreur de connexion au proxy CORS.");
+            return res.json();
+          })
+          .then(data => {
+            const html = data.contents;
+            const idMatch = html.match(/<steamID64>(\d+)<\/steamID64>/);
+            if (!idMatch) {
+              throw new Error("Impossible de résoudre le pseudo Steam. Vérifiez que le profil existe et n'est pas complètement privé.");
+            }
+            return idMatch[1];
+          });
       }
 
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+      resolveIdPromise
+        .then(steamId => {
+          // Save steamId in configuration
+          if (!state.steamConfig) state.steamConfig = {};
+          state.steamConfig.steamId = steamId;
+          saveState();
 
-      fetch(proxyUrl)
+          confirmImportBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Récupération des jeux...`;
+
+          // Fetch games via Steam Web API using the user's API Key (including app details like names/icons)
+          const ownedGamesUrl = `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${apiKey}&steamid=${steamId}&include_appinfo=true&format=json`;
+          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(ownedGamesUrl)}`;
+
+          return fetch(proxyUrl);
+        })
         .then(res => {
-          if (!res.ok) throw new Error("Erreur de connexion au proxy CORS.");
+          if (!res.ok) throw new Error("Le serveur Steam a refusé la clé API ou la requête.");
           return res.json();
         })
         .then(data => {
-          const html = data.contents;
-          if (!html) throw new Error("Impossible de lire le contenu de la page.");
-
-          if (html.includes("The community member has not yet configured their Steam Community profile") || html.includes("profile is private")) {
-            throw new Error("Ce profil est privé ou n'existe pas. Veuillez vérifier les paramètres de confidentialité de votre compte Steam.");
+          const result = JSON.parse(data.contents);
+          if (!result.response || !result.response.games) {
+            throw new Error("Aucun jeu trouvé ou profil privé. Vérifiez que vos 'Détails des jeux' sont bien configurés sur 'Public' dans vos paramètres Steam.");
           }
 
-          const match = html.match(/var\s+rgGames\s*=\s*(\[.*?\])\s*;/);
-          if (!match) {
-            throw new Error("Impossible de trouver la liste de jeux. Assurez-vous que l'onglet 'Détails des jeux' est public sur votre profil Steam.");
-          }
-
-          const parsedGames = JSON.parse(match[1]);
-          if (!parsedGames || parsedGames.length === 0) {
-            throw new Error("Aucun jeu trouvé sur ce profil.");
-          }
-
+          const steamGames = result.response.games;
           if (!state.games) {
             state.games = [];
           }
@@ -2192,12 +2229,9 @@ document.addEventListener('DOMContentLoaded', () => {
           let addedCount = 0;
           let updatedCount = 0;
 
-          parsedGames.forEach(item => {
+          steamGames.forEach(item => {
             const appId = String(item.appid);
-            let playtime = 0;
-            if (item.hours_forever) {
-              playtime = Math.round(parseFloat(item.hours_forever.replace(/,/g, '')) || 0);
-            }
+            const playtime = Math.round((item.playtime_forever || 0) / 60);
 
             const existingIdx = state.games.findIndex(g => g.appId === appId);
             if (existingIdx !== -1) {
@@ -2206,7 +2240,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
               state.games.push({
                 id: 'game-' + Date.now() + '-' + appId,
-                name: item.name,
+                name: item.name || 'Jeu Steam Inconnu',
                 appId: appId,
                 playtime: playtime,
                 peakElo: 'Non classé',

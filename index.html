@@ -803,14 +803,23 @@
         <button class="modal-close" id="close-steam-import-modal" onclick="document.getElementById('steam-import-modal').classList.remove('active');">&times;</button>
       </div>
       <div class="modal-body">
-        <p class="text-muted" style="font-size: 0.9rem; line-height: 1.5; margin-bottom: 20px;">
-          Entrez votre lien de profil Steam public ou votre identifiant personnalisé. Vos détails de jeux doivent être configurés en <strong>Public</strong> dans vos paramètres de confidentialité Steam.
+        <p class="text-muted" style="font-size: 0.85rem; line-height: 1.5; margin-bottom: 20px;">
+          Steam bloque désormais la lecture anonyme des bibliothèques de jeux. Pour importer vos jeux, veuillez renseigner une clé API Steam. Elle est gratuite et instantanée.
         </p>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label for="steam-import-api-key" style="font-weight: 600; color: #fff; margin-bottom: 8px; display:block;">1. Clé API Steam Web (Requise)</label>
+          <input type="password" id="steam-import-api-key" class="glass-input" placeholder="Collez votre clé API Steam Web..." style="width:100%;">
+          <span class="text-muted" style="font-size: 0.75rem; margin-top: 6px; display:block; line-height:1.4;">
+            👉 Obtenez votre clé sur <a href="https://steamcommunity.com/dev/apikey" target="_blank" style="color: var(--secondary); text-decoration: underline; font-weight: 600;">steamcommunity.com/dev/apikey</a> (entrez <code>localhost</code> pour le nom de domaine).
+          </span>
+        </div>
+
         <div class="form-group">
-          <label for="steam-profile-url" style="font-weight: 600; color: #fff; margin-bottom: 8px; display:block;">Lien de votre profil Steam ou Pseudo *</label>
+          <label for="steam-profile-url" style="font-weight: 600; color: #fff; margin-bottom: 8px; display:block;">2. Lien de votre profil Steam ou Pseudo *</label>
           <input type="text" id="steam-profile-url" class="glass-input" placeholder="ex: Wiseee ou https://steamcommunity.com/id/Wiseee/" value="Wiseee" required style="width:100%;">
-          <span class="text-muted" style="font-size: 0.78rem; margin-top: 8px; display:block; line-height: 1.4;">
-            <i class="fa-solid fa-circle-question" style="color: var(--accent-cyan);"></i> <strong>Comment trouver votre lien ?</strong> Ouvrez votre profil Steam sur l'application ou sur un navigateur web, copiez l'URL (ex: <code>https://steamcommunity.com/id/Wiseee/</code>) et collez-la ci-dessus.
+          <span class="text-muted" style="font-size: 0.75rem; margin-top: 8px; display:block; line-height: 1.4;">
+            <i class="fa-solid fa-circle-question" style="color: var(--accent-cyan);"></i> Vos "Détails des jeux" doivent être configurés en <strong>Public</strong> dans les paramètres de confidentialité de votre profil Steam.
           </span>
         </div>
       </div>
