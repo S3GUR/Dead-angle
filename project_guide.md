@@ -58,7 +58,8 @@ L'application est entièrement développée sans frameworks lourds pour garantir
 *   **Bibliothèque de jeux :** Suivez vos jeux préférés avec leur temps de jeu, votre pic d'Elo ou de rang (ex: Diamond I, Global Elite, 2000 Elo), et votre progression de succès.
 *   **Incrémentation rapide :** Des boutons `+5h` et `-5h` directement sur les cartes de jeux vous permettent d'ajuster votre temps de jeu en un clic.
 *   **Bannières officielles :** Renseignez le Steam AppID (ex: `730` pour CS2, `1245620` pour Elden Ring) pour charger automatiquement l'affiche officielle du jeu depuis le CDN Steam.
-*   **Synchronisation en un clic (Optionnel) :** Renseignez votre clé API Steam et votre SteamID64 dans les paramètres pour faire apparaître le bouton de synchronisation. L'application mettra à jour automatiquement votre temps de jeu exact et votre progression de succès.
+*   **Importation simplifiée (SANS clé API) :** Cliquez sur **« Importer via Profil Steam »** et entrez simplement votre identifiant public (ex : `Wiseee`). L'application va lire votre page de profil public en tâche de fond et importer d'un coup tous vos jeux avec leurs heures de jeu respectives.
+*   **Synchronisation complète (AVEC clé API) :** Si vous renseignez votre clé API Steam et votre SteamID64 dans les paramètres, un bouton de synchronisation complète s'activera pour mettre également à jour vos succès en direct.
 
 ### 7. Données & Sauvegarde (LocalStorage)
 *   **Export JSON :** Téléchargez l'intégralité de vos données Wink (projets, tâches, finances, paies, flux et jeux) sous forme de fichier `.json`.
