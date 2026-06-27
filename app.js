@@ -186,8 +186,33 @@ document.addEventListener('DOMContentLoaded', () => {
     enabledModules: {
       finances: true,
       payslips: true,
-      games: true
+      games: true,
+      animes: true
     },
+    animes: [
+      {
+        id: 'anime-1',
+        name: 'Death Note',
+        malId: '1535',
+        image: 'https://cdn.myanimelist.net/images/anime/9/9453.jpg',
+        episodesWatched: 37,
+        episodesTotal: 37,
+        rating: 9,
+        status: 'completed',
+        type: 'TV'
+      },
+      {
+        id: 'anime-2',
+        name: 'Sousou no Frieren',
+        malId: '52991',
+        image: 'https://cdn.myanimelist.net/images/anime/1015/138006.jpg',
+        episodesWatched: 12,
+        episodesTotal: 28,
+        rating: 10,
+        status: 'watching',
+        type: 'TV'
+      }
+    ],
     systemLogs: []
   };
 
@@ -218,7 +243,12 @@ document.addEventListener('DOMContentLoaded', () => {
           state.systemLogs = [];
         }
         if (!state.enabledModules) {
-          state.enabledModules = { finances: true, payslips: true, games: true };
+          state.enabledModules = { finances: true, payslips: true, games: true, animes: true };
+        } else if (state.enabledModules.animes === undefined) {
+          state.enabledModules.animes = true;
+        }
+        if (!state.animes) {
+          state.animes = JSON.parse(JSON.stringify(DEFAULT_STATE.animes));
         }
         state.projects.forEach(p => {
           if (!p.tasks) p.tasks = [];
@@ -336,6 +366,12 @@ document.addEventListener('DOMContentLoaded', () => {
       btnText: "Ajouter un Jeu",
       btnAction: () => openGameModal()
     },
+    animes: {
+      title: "Suivi d'Animes & MyAnimeList",
+      subtitle: "Suivez vos visionnages d'animes, votre progression et importez votre liste MyAnimeList",
+      btnText: "Ajouter un Anime",
+      btnAction: () => openAnimeModal()
+    },
     settings: {
       title: "Paramètres & Données",
       subtitle: "Sauvegardez vos données localement ou importez un fichier externe",
@@ -432,6 +468,9 @@ document.addEventListener('DOMContentLoaded', () => {
       case 'games':
         renderGames();
         break;
+      case 'animes':
+        renderAnimes();
+        break;
       case 'settings':
         // Pre-fill Steam config on render
         const keyInput = document.getElementById('steam-api-key');
@@ -458,6 +497,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const toggleFinances = document.getElementById('module-toggle-finances');
         const togglePayslips = document.getElementById('module-toggle-payslips');
         const toggleGames = document.getElementById('module-toggle-games');
+        const toggleAnimes = document.getElementById('module-toggle-animes');
         
         if (toggleFinances) {
           toggleFinances.checked = state.enabledModules ? state.enabledModules.finances !== false : true;
@@ -482,6 +522,15 @@ document.addEventListener('DOMContentLoaded', () => {
           toggleGames.onchange = (e) => {
             if (!state.enabledModules) state.enabledModules = {};
             state.enabledModules.games = e.target.checked;
+            saveState();
+            updateNavigationModules();
+          };
+        }
+        if (toggleAnimes) {
+          toggleAnimes.checked = state.enabledModules ? state.enabledModules.animes !== false : true;
+          toggleAnimes.onchange = (e) => {
+            if (!state.enabledModules) state.enabledModules = {};
+            state.enabledModules.animes = e.target.checked;
             saveState();
             updateNavigationModules();
           };
@@ -2193,6 +2242,353 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  // ==============================================
+  // ANIME TAB RENDER & CONTROL ENGINE
+  // ==============================================
+  function renderAnimes() {
+    const animesGrid = document.getElementById('animes-grid');
+    if (!animesGrid) return;
+    
+    animesGrid.innerHTML = '';
+
+    if (!state.animes || state.animes.length === 0) {
+      animesGrid.innerHTML = `
+        <div class="glass-panel" style="grid-column: span 3; padding: 40px; text-align: center;">
+          <i class="fa-solid fa-film text-muted" style="font-size: 3rem; margin-bottom: 16px; display:block;"></i>
+          <p class="text-muted" style="font-size: 1rem; margin-bottom: 20px;">Aucun anime dans votre liste de suivi. Commencez à ajouter vos animes ou importez votre profil MyAnimeList !</p>
+          <button class="glass-button primary" onclick="openAnimeModal()"><i class="fa-solid fa-plus"></i> Ajouter mon premier anime</button>
+        </div>
+      `;
+      return;
+    }
+
+    const searchQuery = (document.getElementById('anime-search')?.value || '').toLowerCase().trim();
+    const filterStatus = document.getElementById('filter-anime-status')?.value || 'all';
+    const filterType = document.getElementById('filter-anime-type')?.value || 'all';
+    const sortBy = document.getElementById('sort-animes-by')?.value || 'rating-desc';
+
+    let filteredAnimes = state.animes.filter(anime => {
+      const matchesSearch = anime.name.toLowerCase().includes(searchQuery);
+      const matchesStatus = filterStatus === 'all' || anime.status === filterStatus;
+      const matchesType = filterType === 'all' || anime.type === filterType;
+      return matchesSearch && matchesStatus && matchesType;
+    });
+
+    filteredAnimes.sort((a, b) => {
+      if (sortBy === 'rating-desc') {
+        return (b.rating || 0) - (a.rating || 0);
+      } else if (sortBy === 'progress-desc') {
+        return (b.episodesWatched || 0) - (a.episodesWatched || 0);
+      } else if (sortBy === 'name-asc') {
+        return a.name.localeCompare(b.name);
+      }
+      return 0;
+    });
+
+    if (filteredAnimes.length === 0) {
+      animesGrid.innerHTML = `
+        <div class="glass-panel" style="grid-column: span 3; padding: 30px; text-align: center;">
+          <p class="text-muted">Aucun anime ne correspond à vos filtres.</p>
+        </div>
+      `;
+      return;
+    }
+
+    filteredAnimes.forEach(anime => {
+      const card = document.createElement('div');
+      card.className = 'glass-panel game-card';
+      
+      let bannerHtml = '';
+      if (anime.image) {
+        bannerHtml = `<img src="${anime.image}" class="anime-poster" alt="${anime.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">`;
+      }
+      bannerHtml += `
+        <div class="game-banner-placeholder" style="${anime.image ? 'display:none;' : ''} height: 200px;">
+          <i class="fa-solid fa-film"></i>
+        </div>
+      `;
+
+      const totalEps = parseInt(anime.episodesTotal) || 0;
+      const watchedEps = parseInt(anime.episodesWatched) || 0;
+      const progressPercent = totalEps > 0 ? Math.round((watchedEps / totalEps) * 100) : 0;
+
+      const statusLabels = {
+        watching: { text: 'En cours', color: 'var(--accent-cyan)', bg: 'rgba(6, 182, 212, 0.15)' },
+        completed: { text: 'Terminé', color: 'var(--success)', bg: 'rgba(34, 197, 94, 0.15)' },
+        plan_to_watch: { text: 'À voir', color: 'var(--accent-purple)', bg: 'rgba(168, 85, 247, 0.15)' },
+        on_hold: { text: 'En pause', color: 'var(--accent-yellow)', bg: 'rgba(234, 179, 8, 0.15)' },
+        dropped: { text: 'Abandonné', color: 'var(--accent-pink)', bg: 'rgba(244, 63, 94, 0.15)' }
+      };
+
+      const statusConf = statusLabels[anime.status] || { text: anime.status, color: 'var(--text-muted)', bg: 'rgba(255,255,255,0.08)' };
+
+      card.innerHTML = `
+        ${bannerHtml}
+        <div class="game-stats">
+          <div class="game-header-area">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+              <h3 class="game-title" title="${anime.name}">${anime.name}</h3>
+              <span style="font-size: 0.65rem; background: ${statusConf.bg}; border: 1px solid ${statusConf.color}; padding: 2px 6px; border-radius: 4px; color: ${statusConf.color}; white-space: nowrap;">
+                ${statusConf.text}
+              </span>
+            </div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px;">
+              <div class="game-appid-badge" style="padding: 2px 5px; font-size: 0.65rem; background: rgba(58, 134, 200, 0.15); border-color: rgba(58, 134, 200, 0.3); color: #93c5fd;">
+                <i class="fa-solid fa-clapperboard"></i> ${anime.type || 'TV'}
+              </div>
+              ${anime.rating ? `
+                <div class="game-appid-badge" style="background: rgba(234, 179, 8, 0.15); border-color: rgba(234, 179, 8, 0.3); color: var(--accent-yellow); padding: 2px 5px; font-size: 0.65rem;">
+                  <i class="fa-solid fa-star"></i> ${anime.rating}/10
+                </div>
+              ` : ''}
+              ${anime.malId ? `
+                <div class="game-appid-badge" style="background: rgba(46, 81, 162, 0.15); border-color: rgba(46, 81, 162, 0.3); color: #93c5fd; padding: 2px 5px; font-size: 0.65rem;">
+                  MAL ID: ${anime.malId}
+                </div>
+              ` : ''}
+            </div>
+          </div>
+
+          <div class="game-stat-rows">
+            <!-- Progress episodes -->
+            <div class="game-stat-row">
+              <span class="game-stat-label"><i class="fa-solid fa-play"></i> Épisodes</span>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <button class="glass-button btn-small" onclick="incrementEpisodes('${anime.id}', -1)" style="padding: 1px 4px; font-size: 0.7rem; height: auto;">-1</button>
+                <span class="game-stat-value" style="font-size: 0.8rem;">${watchedEps} / ${totalEps || '?'}</span>
+                <button class="glass-button btn-small" onclick="incrementEpisodes('${anime.id}', 1)" style="padding: 1px 4px; font-size: 0.7rem; height: auto;">+1</button>
+              </div>
+            </div>
+
+            <!-- Progression bar -->
+            <div style="margin-top: 2px;">
+              <div class="game-achievement-bar" style="height: 6px;">
+                <div class="game-achievement-progress" style="width: ${progressPercent}%; background: linear-gradient(90deg, #2e51a2 0%, var(--accent-cyan) 100%);"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div style="display: flex; gap: 8px; margin-top: 4px; border-top: 1px solid var(--border-glass); padding-top: 8px; justify-content: flex-end;">
+            <button class="glass-button btn-small text-muted" onclick="openAnimeModal('${anime.id}')" style="padding: 2px 6px; font-size:0.75rem; height: auto;">
+              <i class="fa-regular fa-pen-to-square"></i> Modifier
+            </button>
+            <button class="glass-button btn-small danger" onclick="deleteAnime('${anime.id}')" style="padding: 2px 6px; font-size:0.75rem; height: auto;">
+              <i class="fa-regular fa-trash-can"></i> Retirer
+            </button>
+          </div>
+        </div>
+      `;
+      animesGrid.appendChild(card);
+    });
+  }
+
+  window.incrementEpisodes = function(id, amount) {
+    const anime = state.animes.find(a => a.id === id);
+    if (anime) {
+      const total = parseInt(anime.episodesTotal) || 9999;
+      anime.episodesWatched = Math.max(0, Math.min(total, (parseInt(anime.episodesWatched) || 0) + amount));
+      
+      if (anime.episodesWatched === total && total > 0) {
+        anime.status = 'completed';
+      }
+      
+      saveState();
+      renderAnimes();
+    }
+  };
+
+  const animeModal = document.getElementById('anime-modal');
+  const animeForm = document.getElementById('anime-form');
+
+  window.openAnimeModal = function(id = null) {
+    if (!animeModal) return;
+    
+    // Reset form
+    animeForm.reset();
+    document.getElementById('anime-id').value = '';
+    document.getElementById('anime-status-input').value = 'watching';
+    document.getElementById('anime-type-input').value = 'TV';
+    document.getElementById('anime-modal-title').innerText = "Ajouter un Anime";
+
+    if (id) {
+      const anime = state.animes.find(a => a.id === id);
+      if (anime) {
+        document.getElementById('anime-id').value = anime.id;
+        document.getElementById('anime-title-input').value = anime.name;
+        document.getElementById('anime-mal-id').value = anime.malId || '';
+        document.getElementById('anime-type-input').value = anime.type || 'TV';
+        document.getElementById('anime-episodes-watched').value = anime.episodesWatched || 0;
+        document.getElementById('anime-episodes-total').value = anime.episodesTotal || 12;
+        document.getElementById('anime-score-input').value = anime.rating || 0;
+        document.getElementById('anime-status-input').value = anime.status || 'watching';
+        document.getElementById('anime-modal-title').innerText = "Modifier l'Anime";
+      }
+    }
+    animeModal.classList.add('active');
+  };
+
+  if (animeForm) {
+    animeForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const id = document.getElementById('anime-id').value;
+      const name = document.getElementById('anime-title-input').value.trim();
+      const malId = document.getElementById('anime-mal-id').value.trim();
+      const type = document.getElementById('anime-type-input').value;
+      const episodesWatched = parseInt(document.getElementById('anime-episodes-watched').value) || 0;
+      const episodesTotal = parseInt(document.getElementById('anime-episodes-total').value) || 0;
+      const rating = parseInt(document.getElementById('anime-score-input').value) || 0;
+      const status = document.getElementById('anime-status-input').value;
+
+      if (!state.animes) {
+        state.animes = [];
+      }
+
+      let image = '';
+      if (malId) {
+        image = `https://cdn.myanimelist.net/images/anime/default/${malId}.jpg`;
+      }
+
+      if (id) {
+        // Edit
+        const idx = state.animes.findIndex(a => a.id === id);
+        if (idx !== -1) {
+          state.animes[idx] = { 
+            ...state.animes[idx], 
+            name, 
+            malId, 
+            type,
+            episodesWatched, 
+            episodesTotal, 
+            rating, 
+            status,
+            image: image || state.animes[idx].image
+          };
+          logActivity('animes', `Anime '${name}' mis à jour.`);
+        }
+      } else {
+        // Add
+        const newAnime = {
+          id: 'anime-' + Date.now(),
+          name,
+          malId,
+          type,
+          episodesWatched,
+          episodesTotal,
+          rating,
+          status,
+          image
+        };
+        state.animes.push(newAnime);
+        logActivity('animes', `Anime '${name}' ajouté.`);
+      }
+
+      saveState();
+      animeModal.classList.remove('active');
+      refreshView('animes');
+    });
+  }
+
+  window.deleteAnime = function(id) {
+    const anime = state.animes.find(a => a.id === id);
+    if (anime && confirm(`Voulez-vous vraiment retirer "${anime.name}" de votre liste ?`)) {
+      state.animes = state.animes.filter(a => a.id !== id);
+      logActivity('animes', `Anime '${anime.name}' retiré.`);
+      saveState();
+      refreshView('animes');
+    }
+  };
+
+  // MyAnimeList Import
+  const confirmMalImportBtn = document.getElementById('confirm-mal-import-btn');
+  if (confirmMalImportBtn) {
+    confirmMalImportBtn.addEventListener('click', () => {
+      const username = document.getElementById('mal-username').value.trim();
+      if (!username) {
+        alert("Veuillez saisir un pseudo MyAnimeList.");
+        return;
+      }
+
+      confirmMalImportBtn.disabled = true;
+      confirmMalImportBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Importation...`;
+
+      const malUrl = `https://myanimelist.net/animelist/${username}/load.json?offset=0&status=7`;
+
+      fetchWithProxy(malUrl)
+        .then(contents => {
+          const malData = JSON.parse(contents);
+          if (!Array.isArray(malData)) {
+            throw new Error("Impossible de lire la liste. Assurez-vous que le profil MyAnimeList est public.");
+          }
+
+          if (!state.animes) {
+            state.animes = [];
+          }
+
+          let added = 0;
+          let updated = 0;
+
+          const malStatusMap = {
+            1: 'watching',
+            2: 'completed',
+            3: 'on_hold',
+            4: 'dropped',
+            6: 'plan_to_watch'
+          };
+
+          malData.forEach(item => {
+            const malId = String(item.anime_id);
+            const name = item.anime_title || 'Anime Inconnu';
+            const watched = parseInt(item.num_watched_episodes) || 0;
+            const total = parseInt(item.anime_num_episodes) || 0;
+            const score = parseInt(item.score) || 0;
+            const statusVal = malStatusMap[item.status] || 'watching';
+            const type = item.anime_media_type_string || 'TV';
+            const poster = item.anime_image_path || '';
+
+            const existingIdx = state.animes.findIndex(a => a.malId === malId);
+            if (existingIdx !== -1) {
+              state.animes[existingIdx].episodesWatched = watched;
+              state.animes[existingIdx].episodesTotal = total;
+              state.animes[existingIdx].rating = score;
+              state.animes[existingIdx].status = statusVal;
+              state.animes[existingIdx].image = poster || state.animes[existingIdx].image;
+              updated++;
+            } else {
+              state.animes.push({
+                id: 'anime-' + Date.now() + '-' + malId,
+                name,
+                malId,
+                type,
+                episodesWatched: watched,
+                episodesTotal: total,
+                rating: score,
+                status: statusVal,
+                image: poster
+              });
+              added++;
+            }
+          });
+
+          saveState();
+          logActivity('animes', `Importation MyAnimeList effectuée (${added} ajoutés, ${updated} mis à jour).`);
+          alert(`Importation réussie ! ${added} animes ajoutés et ${updated} mis à jour.`);
+          
+          confirmMalImportBtn.disabled = false;
+          confirmMalImportBtn.innerHTML = "Lancer l'importation";
+          document.getElementById('mal-import-modal').classList.remove('active');
+          refreshView('animes');
+        })
+        .catch(err => {
+          console.error(err);
+          logSystemError('mal-import-error', "Erreur lors de l'importation MyAnimeList", err.message);
+          alert(`Erreur d'importation : ${err.message}. Vérifiez le journal de diagnostic.`);
+          confirmMalImportBtn.disabled = false;
+          confirmMalImportBtn.innerHTML = "Lancer l'importation";
+        });
+    });
+  }
+
   // Steam Param Saving
   const saveSteamBtn = document.getElementById('save-steam-config-btn');
   if (saveSteamBtn) {
@@ -2536,11 +2932,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const navFinances = document.querySelector('.nav-item[data-tab="finances"]');
     const navPayslips = document.querySelector('.nav-item[data-tab="payslips"]');
     const navGames = document.querySelector('.nav-item[data-tab="games"]');
+    const navAnimes = document.querySelector('.nav-item[data-tab="animes"]');
     
     if (state.enabledModules) {
       if (navFinances) navFinances.style.display = state.enabledModules.finances !== false ? 'block' : 'none';
       if (navPayslips) navPayslips.style.display = state.enabledModules.payslips !== false ? 'block' : 'none';
       if (navGames) navGames.style.display = state.enabledModules.games !== false ? 'block' : 'none';
+      if (navAnimes) navAnimes.style.display = state.enabledModules.animes !== false ? 'block' : 'none';
     }
   }
 
@@ -2553,6 +2951,16 @@ document.addEventListener('DOMContentLoaded', () => {
   if (gameCategorySelect) gameCategorySelect.addEventListener('change', () => renderGames());
   const gameSortSelect = document.getElementById('sort-games-by');
   if (gameSortSelect) gameSortSelect.addEventListener('change', () => renderGames());
+
+  // Bind anime filter inputs
+  const animeSearchInput = document.getElementById('anime-search');
+  if (animeSearchInput) animeSearchInput.addEventListener('input', () => renderAnimes());
+  const animeStatusSelect = document.getElementById('filter-anime-status');
+  if (animeStatusSelect) animeStatusSelect.addEventListener('change', () => renderAnimes());
+  const animeTypeSelect = document.getElementById('filter-anime-type');
+  if (animeTypeSelect) animeTypeSelect.addEventListener('change', () => renderAnimes());
+  const animeSortSelect = document.getElementById('sort-animes-by');
+  if (animeSortSelect) animeSortSelect.addEventListener('change', () => renderAnimes());
 
   // Initial Load
   loadState();

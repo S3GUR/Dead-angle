@@ -13,7 +13,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
   <!-- Custom Styling -->
-  <link rel="stylesheet" href="style.css?v=5">
+  <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
   <!-- Background Ambient Glows -->
@@ -59,6 +59,12 @@
           <a class="nav-link">
             <i class="fa-solid fa-gamepad"></i>
             <span>Gaming</span>
+          </a>
+        </li>
+        <li class="nav-item" data-tab="animes">
+          <a class="nav-link">
+            <i class="fa-solid fa-film"></i>
+            <span>Animes</span>
           </a>
         </li>
         <li class="nav-item" data-tab="rates">
@@ -447,6 +453,60 @@
       </section>
 
       <!-- ============================================== -->
+      <!-- TAB 5.5: ANIMES                                -->
+      <!-- ============================================== -->
+      <section id="tab-animes" class="tab-panel">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+          <h2 style="font-family: 'Outfit'; font-size: 1.5rem; color: #fff; margin:0;">Suivi d'Animes</h2>
+          <div style="display: flex; gap: 10px;">
+            <button class="glass-button" id="import-mal-btn" onclick="document.getElementById('mal-import-modal').classList.add('active');" style="background: rgba(46, 81, 162, 0.2); border-color: #2e51a2;">
+              <i class="fa-solid fa-circle-play"></i> Importer via MyAnimeList
+            </button>
+          </div>
+        </div>
+
+        <!-- Animes Filter and Sort Bar -->
+        <div class="glass-panel" style="margin-bottom: 20px; padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between;">
+          <div style="display: flex; gap: 10px; flex-grow: 1; flex-wrap: wrap; align-items: center;">
+            <div class="form-group" style="margin-bottom: 0; min-width: 180px;">
+              <input type="text" id="anime-search" class="glass-input" placeholder="Rechercher un anime..." style="padding: 6px 12px; font-size: 0.85rem; width: 100%;">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <select id="filter-anime-status" class="glass-input" style="padding: 6px 12px; font-size: 0.85rem; height: auto; width: auto;">
+                <option value="all">Tous les statuts</option>
+                <option value="watching">En cours</option>
+                <option value="completed">Terminé</option>
+                <option value="plan_to_watch">À voir</option>
+                <option value="on_hold">En pause</option>
+                <option value="dropped">Abandonné</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <select id="filter-anime-type" class="glass-input" style="padding: 6px 12px; font-size: 0.85rem; height: auto; width: auto;">
+                <option value="all">Tous les types</option>
+                <option value="TV">Série TV</option>
+                <option value="Movie">Film</option>
+                <option value="OVA">OVA</option>
+                <option value="Special">Spécial</option>
+              </select>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="color: var(--text-muted); font-size: 0.85rem;"><i class="fa-solid fa-arrow-down-wide-short"></i> Trier par :</span>
+            <select id="sort-animes-by" class="glass-input" style="padding: 6px 12px; font-size: 0.85rem; height: auto; width: auto;">
+              <option value="rating-desc">Note (Max-Min)</option>
+              <option value="progress-desc">Épisodes vus (Max-Min)</option>
+              <option value="name-asc">Nom (A-Z)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="games-grid" id="animes-grid">
+          <!-- Animes cards injected dynamically -->
+        </div>
+      </section>
+
+      <!-- ============================================== -->
       <!-- TAB 6: SETTINGS & DATA                         -->
       <!-- ============================================== -->
       <section id="tab-settings" class="tab-panel">
@@ -542,6 +602,10 @@
                 <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; color: #fff; font-size: 0.95rem;">
                   <input type="checkbox" id="module-toggle-games" class="card-task-checkbox" style="width: 18px; height: 18px; position: static; opacity: 1; pointer-events: auto;" checked>
                   <span>Bibliothèque Gaming & Intégration Steam</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; color: #fff; font-size: 0.95rem;">
+                  <input type="checkbox" id="module-toggle-animes" class="card-task-checkbox" style="width: 18px; height: 18px; position: static; opacity: 1; pointer-events: auto;" checked>
+                  <span>Suivi d'Animes & MyAnimeList</span>
                 </label>
               </div>
             </div>
@@ -926,7 +990,104 @@
     </div>
   </div>
 
+  <!-- ============================================== -->
+  <!-- MODAL: ADD / EDIT ANIME                        -->
+  <!-- ============================================== -->
+  <div class="modal-overlay" id="anime-modal">
+    <div class="modal-content glass-panel" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="anime-modal-title">Ajouter un Anime</h3>
+        <button class="modal-close" id="close-anime-modal" onclick="document.getElementById('anime-modal').classList.remove('active');">&times;</button>
+      </div>
+      <form id="anime-form">
+        <input type="hidden" id="anime-id">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="anime-title-input">Titre de l'anime *</label>
+            <input type="text" id="anime-title-input" class="glass-input" placeholder="ex: Death Note, Shingeki no Kyojin..." required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="anime-mal-id">MyAnimeList ID (Optionnel)</label>
+              <input type="text" id="anime-mal-id" class="glass-input" placeholder="ex: 1535 pour Death Note...">
+            </div>
+            <div class="form-group">
+              <label for="anime-type-input">Type de média</label>
+              <select id="anime-type-input" class="glass-input" style="width: 100%;">
+                <option value="TV">Série TV</option>
+                <option value="Movie">Film</option>
+                <option value="OVA">OVA</option>
+                <option value="Special">Spécial</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="anime-episodes-watched">Épisodes vus</label>
+              <input type="number" id="anime-episodes-watched" class="glass-input" min="0" value="0">
+            </div>
+            <div class="form-group">
+              <label for="anime-episodes-total">Total d'épisodes</label>
+              <input type="number" id="anime-episodes-total" class="glass-input" min="0" value="12">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="anime-score-input">Note personnelle (/10)</label>
+              <input type="number" id="anime-score-input" class="glass-input" min="0" max="10" value="0">
+            </div>
+            <div class="form-group">
+              <label for="anime-status-input">Statut de visionnage</label>
+              <select id="anime-status-input" class="glass-input" style="width: 100%;">
+                <option value="watching">En cours (Watching)</option>
+                <option value="completed">Terminé (Completed)</option>
+                <option value="plan_to_watch">À voir (Plan to Watch)</option>
+                <option value="on_hold">En pause (On Hold)</option>
+                <option value="dropped">Abandonné (Dropped)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="glass-button" id="cancel-anime-modal" onclick="document.getElementById('anime-modal').classList.remove('active');">Annuler</button>
+          <button type="submit" class="glass-button primary">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: MYANIMELIST IMPORT                      -->
+  <!-- ============================================== -->
+  <div class="modal-overlay" id="mal-import-modal">
+    <div class="modal-content glass-panel" style="max-width: 450px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Importer depuis MyAnimeList</h3>
+        <button class="modal-close" id="close-mal-import-modal" onclick="document.getElementById('mal-import-modal').classList.remove('active');">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted" style="font-size: 0.85rem; line-height: 1.5; margin-bottom: 20px;">
+          Entrez votre pseudo public MyAnimeList pour importer d'un coup l'intégralité de vos animes avec vos notes, votre progression et leurs affiches officielles.
+        </p>
+        <div class="form-group">
+          <label for="mal-username" style="font-weight: 600; color: #fff; margin-bottom: 8px; display:block;">Pseudo MyAnimeList *</label>
+          <input type="text" id="mal-username" class="glass-input" placeholder="ex: Wiseee..." required style="width: 100%;">
+          <span class="text-muted" style="font-size: 0.75rem; margin-top: 8px; display:block; line-height: 1.4;">
+            <i class="fa-solid fa-circle-info" style="color: var(--accent-cyan);"></i> Vos listes doivent être configurées en mode <strong>Public</strong> dans vos paramètres MyAnimeList.
+          </span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="glass-button" id="cancel-mal-import-modal" onclick="document.getElementById('mal-import-modal').classList.remove('active');">Annuler</button>
+        <button type="button" class="glass-button primary" id="confirm-mal-import-btn">Lancer l'importation</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Custom Scripts -->
-  <script src="app.js?v=5"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>
