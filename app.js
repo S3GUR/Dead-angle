@@ -230,33 +230,51 @@ document.addEventListener('DOMContentLoaded', () => {
     if (saved) {
       try {
         state = JSON.parse(saved);
-        if (!state.recurringFlows) {
+        
+        // Ensure all required fields exist to prevent runtime errors
+        if (!state.projects || !Array.isArray(state.projects)) {
+          state.projects = [];
+        }
+        if (!state.finances || !Array.isArray(state.finances)) {
+          state.finances = [];
+        }
+        if (!state.payslips || !Array.isArray(state.payslips)) {
+          state.payslips = [];
+        }
+        if (!state.recurringFlows || !Array.isArray(state.recurringFlows)) {
           state.recurringFlows = JSON.parse(JSON.stringify(DEFAULT_STATE.recurringFlows));
         }
-        if (!state.games) {
+        if (!state.games || !Array.isArray(state.games)) {
           state.games = JSON.parse(JSON.stringify(DEFAULT_STATE.games));
+        }
+        if (!state.animes || !Array.isArray(state.animes)) {
+          state.animes = JSON.parse(JSON.stringify(DEFAULT_STATE.animes));
+        }
+        if (!state.activities || !Array.isArray(state.activities)) {
+          state.activities = JSON.parse(JSON.stringify(DEFAULT_STATE.activities));
         }
         if (!state.steamConfig) {
           state.steamConfig = { apiKey: "", steamId: "" };
         }
-        if (!state.systemLogs) {
+        if (!state.systemLogs || !Array.isArray(state.systemLogs)) {
           state.systemLogs = [];
         }
-        if (!state.enabledModules) {
+        if (!state.enabledModules || typeof state.enabledModules !== 'object') {
           state.enabledModules = { finances: true, payslips: true, games: true, animes: true };
-        } else if (state.enabledModules.animes === undefined) {
-          state.enabledModules.animes = true;
+        } else {
+          if (state.enabledModules.finances === undefined) state.enabledModules.finances = true;
+          if (state.enabledModules.payslips === undefined) state.enabledModules.payslips = true;
+          if (state.enabledModules.games === undefined) state.enabledModules.games = true;
+          if (state.enabledModules.animes === undefined) state.enabledModules.animes = true;
         }
-        if (!state.animes) {
-          state.animes = JSON.parse(JSON.stringify(DEFAULT_STATE.animes));
-        }
+        
         state.projects.forEach(p => {
-          if (!p.tasks) p.tasks = [];
+          if (p && !p.tasks) p.tasks = [];
         });
       } catch (e) {
-        console.error("Erreur de lecture du localStorage, chargement des données par défaut", e);
+        console.error("Erreur de lecture du localStorage, chargement temporaire des données par défaut", e);
+        // Fallback in memory, do NOT call saveState() to avoid overwriting the corrupt data on disk!
         state = JSON.parse(JSON.stringify(DEFAULT_STATE));
-        logSystemError('state-load', "Erreur de lecture du localStorage", e.message);
       }
     } else {
       state = JSON.parse(JSON.stringify(DEFAULT_STATE));
