@@ -26,23 +26,28 @@ L'application est entièrement développée sans frameworks lourds pour garantir
 ### 2. Gestion des Projets
 *   **Fiches Projets :**
     *   Statut du projet sous forme de badge coloré (*Non commencé*, *En cours*, *En pause*, *Terminé*).
-    *   Barre de progression dynamique ajustée en pourcentage.
-    *   Temps investi (en heures) avec des boutons **`+`** et **`-`** rapides directement sur la carte pour incrémenter ou décrémenter facilement votre investissement temporel.
+    *   **Checklist de Tâches :** Chaque projet peut contenir une liste de tâches avec des niveaux de **priorité** (*Haute*, *Moyenne*, *Faible*).
+    *   **Progression automatique (%) :** Cochez ou décochez les tâches directement depuis la carte du projet pour recalculer et animer la progression en temps réel (ex: 2/4 tâches faites = 50%).
+    *   Temps investi (en heures) avec des boutons **`+`** et **`-`** rapides directement sur la carte.
     *   Détails sur le budget alloué et la date limite (échéance).
 *   **Système de Filtres :** Filtrez instantanément vos projets par statut (Tous, En cours, Non commencés, En pause, Terminés).
-*   **Formulaire Modale :** Ajouter ou modifier un projet en un clic.
+*   **Formulaire Modale :** Saisir ou modifier un projet et gérer ses tâches en un clic.
 
 ### 3. Finances & Actifs
-*   **Catégorisation libre :** Créez vos comptes bancaires (*Boursorama*, *N26*), vos livrets d'épargne (*Livret A*, *LDD*), vos investissements (*PEA*, *Crypto*), ou vos biens matériels (*PC Gamer*, *Voiture*).
+*   **Catégorisation libre :** Créez vos comptes bancaires, livrets d'épargne, investissements ou biens matériels.
 *   **Calcul de Fortune Nette :** Somme automatisée de vos actifs calculée en temps réel.
-*   **Graphique à Barres Horizontal :** Pour analyser le montant présent dans chaque sous-catégorie d'actif.
+*   **Flux Récurrents (Cash Flow) :** 
+    *   Saisissez vos revenus (freelancing, loyers perçus, salaires) et vos dépenses fixes (abonnements, loyer, factures).
+    *   Choisissez la fréquence (*Hebdomadaire*, *Mensuelle*, *Annuelle*).
+    *   **Calculateur d'Épargne Réelle :** L'application normalise tous vos flux sur une base mensuelle pour calculer votre **Capacité d'Épargne Mensuelle** nette et votre **Taux d'Engagement des Revenus** (le pourcentage de vos gains absorbé par les charges).
+*   **Graphiques Interactifs :** Doughnut pour la répartition des actifs sur le Tableau de bord et graphique à barres pour l'onglet Finances.
 
 ### 4. Fiches de Paie (Revenus)
 *   Consignez vos bulletins de salaire mensuels avec l'employeur, le salaire brut, le salaire net perçu, l'impôt prélevé à la source et le nombre d'heures.
 *   Gerez l'historique complet pour suivre l'évolution de vos revenus salariés au fil des mois.
 
 ### 5. Données & Sauvegarde (LocalStorage)
-*   **Export JSON :** Téléchargez l'intégralité de vos données Wink sous forme de fichier `.json` en un clic pour créer des sauvegardes externes.
+*   **Export JSON :** Téléchargez l'intégralité de vos données Wink sous forme de fichier `.json` en un clic pour créer des sauvegardes externes (incluant désormais vos tâches et flux récurrents).
 *   **Import JSON :** Restaurez une sauvegarde précédente en glissant/déposant votre fichier JSON.
 *   **Réinitialisation :** Bouton pour effacer l'ensemble de la base locale et recharger les données d'exemple.
 
