@@ -54,8 +54,14 @@ L'application est entièrement développée sans frameworks lourds pour garantir
     *   Prise en compte de la **Flat Tax française (30%)** : Une option permet de déduire automatiquement les impôts sur les livrets fiscalisés pour comparer les vrais rendements nets.
 *   **Graphique de comparaison (Chart.js) :** Pour identifier d'un coup d'œil le livret le plus avantageux selon la somme simulée.
 
-### 6. Données & Sauvegarde (LocalStorage)
-*   **Export JSON :** Téléchargez l'intégralité de vos données Wink sous forme de fichier `.json` en un clic pour créer des sauvegardes externes (incluant désormais vos tâches et flux récurrents).
+### 6. Suivi Gaming & Intégration Steam
+*   **Bibliothèque de jeux :** Suivez vos jeux préférés avec leur temps de jeu, votre pic d'Elo ou de rang (ex: Diamond I, Global Elite, 2000 Elo), et votre progression de succès.
+*   **Incrémentation rapide :** Des boutons `+5h` et `-5h` directement sur les cartes de jeux vous permettent d'ajuster votre temps de jeu en un clic.
+*   **Bannières officielles :** Renseignez le Steam AppID (ex: `730` pour CS2, `1245620` pour Elden Ring) pour charger automatiquement l'affiche officielle du jeu depuis le CDN Steam.
+*   **Synchronisation en un clic (Optionnel) :** Renseignez votre clé API Steam et votre SteamID64 dans les paramètres pour faire apparaître le bouton de synchronisation. L'application mettra à jour automatiquement votre temps de jeu exact et votre progression de succès.
+
+### 7. Données & Sauvegarde (LocalStorage)
+*   **Export JSON :** Téléchargez l'intégralité de vos données Wink (projets, tâches, finances, paies, flux et jeux) sous forme de fichier `.json`.
 *   **Import JSON :** Restaurez une sauvegarde précédente en glissant/déposant votre fichier JSON.
 *   **Réinitialisation :** Bouton pour effacer l'ensemble de la base locale et recharger les données d'exemple.
 
