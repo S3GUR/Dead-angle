@@ -63,8 +63,14 @@ L'application est entièrement développée sans frameworks lourds pour garantir
 *   **Importation complète avec succès :** L'importation depuis un profil Steam public résout votre profil et télécharge en parallèle **la liste des jeux, les temps de jeu et l'ensemble de vos succès** automatiquement.
 *   **Bannières & Ajustement rapide :** Chargement des headers officiels Steam et boutons d'ajustement rapides `+/- 5h`.
 
+### 6.5. Suivi d'Animes & Intégration MyAnimeList
+*   **Bibliothèque d'animes :** Suivez vos animes favoris avec le nombre d'épisodes vus, le score que vous leur attribuez, et leur statut (En cours, Terminé, À voir, En pause, Abandonné).
+*   **Importation en un clic :** Entrez simplement votre pseudo public MyAnimeList. L'application télécharge via le scraper interne de manière transparente l'intégralité de votre liste, vos scores, vos épisodes visionnés et vos affiches officielles (posters).
+*   **Contrôle de visionnage :** Des boutons `-1` et `+1` rapides directement sur les fiches permettent d'incrémenter vos épisodes. La fiche passe automatiquement en « Terminé » quand le total d'épisodes est atteint.
+*   **Filtres et Triage :** Filtrage par statut de visionnage, par type de média (Série TV, Film, OVA, Spécial) et recherche textuelle. Triage par note personnelle ou par progression.
+
 ### 7. Données, Sauvegarde & Activation des Modules (LocalStorage)
-*   **Activation des modules :** Cochez ou décochez les modules (Finances, Bulletins de salaire, Gaming) dans les paramètres pour afficher/masquer dynamiquement les onglets sur la barre latérale selon vos besoins de navigation.
+*   **Activation des modules :** Cochez ou décochez les modules (Finances, Bulletins de salaire, Gaming, Animes) dans les paramètres pour afficher/masquer dynamiquement les onglets sur la barre latérale selon vos besoins de navigation.
 *   **Export/Import JSON :** Téléchargez et restaurez l'intégralité de vos données de vie en un clic.
 *   **Réinitialisation :** Effacez la base locale pour recharger les données d'exemple.
 
