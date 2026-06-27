@@ -183,6 +183,11 @@ document.addEventListener('DOMContentLoaded', () => {
         time: 'Il y a 5 jours'
       }
     ],
+    enabledModules: {
+      finances: true,
+      payslips: true,
+      games: true
+    },
     systemLogs: []
   };
 
@@ -211,6 +216,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (!state.systemLogs) {
           state.systemLogs = [];
+        }
+        if (!state.enabledModules) {
+          state.enabledModules = { finances: true, payslips: true, games: true };
         }
         state.projects.forEach(p => {
           if (!p.tasks) p.tasks = [];
@@ -337,6 +345,12 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   function switchTab(tabId) {
+    // Redirect if module is disabled
+    if (state.enabledModules && state.enabledModules[tabId] === false) {
+      switchTab('dashboard');
+      return;
+    }
+
     // Update active class on nav
     navItems.forEach(item => {
       if (item.getAttribute('data-tab') === tabId) {
@@ -437,6 +451,39 @@ document.addEventListener('DOMContentLoaded', () => {
               saveState();
               renderSystemLogs();
             }
+          };
+        }
+
+        // Bind module config switches
+        const toggleFinances = document.getElementById('module-toggle-finances');
+        const togglePayslips = document.getElementById('module-toggle-payslips');
+        const toggleGames = document.getElementById('module-toggle-games');
+        
+        if (toggleFinances) {
+          toggleFinances.checked = state.enabledModules ? state.enabledModules.finances !== false : true;
+          toggleFinances.onchange = (e) => {
+            if (!state.enabledModules) state.enabledModules = {};
+            state.enabledModules.finances = e.target.checked;
+            saveState();
+            updateNavigationModules();
+          };
+        }
+        if (togglePayslips) {
+          togglePayslips.checked = state.enabledModules ? state.enabledModules.payslips !== false : true;
+          togglePayslips.onchange = (e) => {
+            if (!state.enabledModules) state.enabledModules = {};
+            state.enabledModules.payslips = e.target.checked;
+            saveState();
+            updateNavigationModules();
+          };
+        }
+        if (toggleGames) {
+          toggleGames.checked = state.enabledModules ? state.enabledModules.games !== false : true;
+          toggleGames.onchange = (e) => {
+            if (!state.enabledModules) state.enabledModules = {};
+            state.enabledModules.games = e.target.checked;
+            saveState();
+            updateNavigationModules();
           };
         }
         break;
@@ -1852,6 +1899,30 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==============================================
   // GAMING TAB RENDER & CONTROL ENGINE
   // ==============================================
+  function populateGameCategories() {
+    const filterCategory = document.getElementById('filter-game-category');
+    if (!filterCategory) return;
+    
+    const savedSel = filterCategory.value;
+    filterCategory.innerHTML = '<option value="all">Tous les genres</option>';
+    
+    const categories = new Set();
+    if (state.games) {
+      state.games.forEach(g => {
+        if (g.category) categories.add(g.category.trim());
+      });
+    }
+    
+    Array.from(categories).sort().forEach(cat => {
+      const opt = document.createElement('option');
+      opt.value = cat;
+      opt.innerText = cat;
+      filterCategory.appendChild(opt);
+    });
+    
+    filterCategory.value = savedSel;
+  }
+
   function renderGames() {
     const gamesGrid = document.getElementById('games-grid');
     if (!gamesGrid) return;
@@ -1868,6 +1939,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    populateGameCategories();
+
     if (!state.games || state.games.length === 0) {
       gamesGrid.innerHTML = `
         <div class="glass-panel" style="grid-column: span 3; padding: 40px; text-align: center;">
@@ -1879,11 +1952,46 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    state.games.forEach(game => {
+    const searchQuery = (document.getElementById('game-search')?.value || '').toLowerCase().trim();
+    const filterType = document.getElementById('filter-game-type')?.value || 'all';
+    const filterCategory = document.getElementById('filter-game-category')?.value || 'all';
+    const sortBy = document.getElementById('sort-games-by')?.value || 'playtime-desc';
+
+    let filteredGames = state.games.filter(game => {
+      const matchesSearch = game.name.toLowerCase().includes(searchQuery);
+      const matchesType = filterType === 'all' || game.type === filterType;
+      const matchesCategory = filterCategory === 'all' || game.category === filterCategory;
+      return matchesSearch && matchesType && matchesCategory;
+    });
+
+    filteredGames.sort((a, b) => {
+      if (sortBy === 'playtime-desc') {
+        return (b.playtime || 0) - (a.playtime || 0);
+      } else if (sortBy === 'playtime-asc') {
+        return (a.playtime || 0) - (b.playtime || 0);
+      } else if (sortBy === 'name-asc') {
+        return a.name.localeCompare(b.name);
+      } else if (sortBy === 'achievements-desc') {
+        const aPercent = (a.achievementsTotal || 0) > 0 ? (a.achievementsUnlocked || 0) / a.achievementsTotal : 0;
+        const bPercent = (b.achievementsTotal || 0) > 0 ? (b.achievementsUnlocked || 0) / b.achievementsTotal : 0;
+        return bPercent - aPercent;
+      }
+      return 0;
+    });
+
+    if (filteredGames.length === 0) {
+      gamesGrid.innerHTML = `
+        <div class="glass-panel" style="grid-column: span 3; padding: 30px; text-align: center;">
+          <p class="text-muted">Aucun jeu ne correspond à vos filtres.</p>
+        </div>
+      `;
+      return;
+    }
+
+    filteredGames.forEach(game => {
       const card = document.createElement('div');
       card.className = 'glass-panel game-card';
       
-      // Determine banner
       let bannerHtml = '';
       if (game.appId) {
         bannerHtml = `<img src="https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/${game.appId}/header.jpg" class="game-banner" alt="${game.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">`;
@@ -1894,58 +2002,72 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
 
-      // Achievement progress percentage
       const totalAch = parseInt(game.achievementsTotal) || 0;
       const unlockedAch = parseInt(game.achievementsUnlocked) || 0;
       const progressPercent = totalAch > 0 ? Math.round((unlockedAch / totalAch) * 100) : 0;
+
+      const typeLabel = game.type === 'multi' ? 'Multi' : (game.type === 'coop' ? 'Coop' : 'Solo');
+      const typeIcon = game.type === 'multi' ? 'users' : (game.type === 'coop' ? 'people-group' : 'user');
 
       card.innerHTML = `
         ${bannerHtml}
         <div class="game-stats">
           <div class="game-header-area">
-            <h3 class="game-title">${game.name}</h3>
-            ${game.appId ? `
-              <div class="game-appid-badge">
-                <i class="fa-brands fa-steam"></i> AppID: ${game.appId}
-              </div>
-            ` : ''}
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+              <h3 class="game-title" title="${game.name}">${game.name}</h3>
+              <span style="font-size: 0.65rem; background: rgba(255,255,255,0.08); border: 1px solid var(--border-glass); padding: 2px 6px; border-radius: 4px; color: var(--text-muted); white-space: nowrap;">
+                <i class="fa-solid fa-${typeIcon}"></i> ${typeLabel}
+              </span>
+            </div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px;">
+              ${game.appId ? `
+                <div class="game-appid-badge" style="padding: 2px 5px; font-size: 0.65rem; background: rgba(58, 134, 200, 0.15); border-color: rgba(58, 134, 200, 0.3); color: #93c5fd;">
+                  <i class="fa-brands fa-steam"></i> AppID: ${game.appId}
+                </div>
+              ` : ''}
+              ${game.category ? `
+                <div class="game-appid-badge" style="background: rgba(167, 139, 250, 0.15); border-color: rgba(167, 139, 250, 0.3); color: #c084fc; padding: 2px 5px; font-size: 0.65rem;">
+                  <i class="fa-solid fa-tags"></i> ${game.category}
+                </div>
+              ` : ''}
+            </div>
           </div>
 
           <div class="game-stat-rows">
             <!-- Playtime -->
             <div class="game-stat-row">
-              <span class="game-stat-label"><i class="fa-regular fa-clock"></i> Temps de jeu</span>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <button class="glass-button btn-small" onclick="incrementPlaytime('${game.id}', -5)" style="padding: 2px 6px; font-size: 0.8rem; height: auto;">-5h</button>
-                <span class="game-stat-value">${game.playtime} hrs</span>
-                <button class="glass-button btn-small" onclick="incrementPlaytime('${game.id}', 5)" style="padding: 2px 6px; font-size: 0.8rem; height: auto;">+5h</button>
+              <span class="game-stat-label"><i class="fa-regular fa-clock"></i> Temps</span>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <button class="glass-button btn-small" onclick="incrementPlaytime('${game.id}', -5)" style="padding: 1px 4px; font-size: 0.7rem; height: auto;">-5h</button>
+                <span class="game-stat-value" style="font-size: 0.8rem;">${game.playtime} hrs</span>
+                <button class="glass-button btn-small" onclick="incrementPlaytime('${game.id}', 5)" style="padding: 1px 4px; font-size: 0.7rem; height: auto;">+5h</button>
               </div>
             </div>
 
             <!-- Peak Elo / Rank -->
             <div class="game-stat-row">
-              <span class="game-stat-label"><i class="fa-solid fa-trophy"></i> Meilleur rang</span>
-              <span class="game-elo-badge" title="${game.peakElo || 'N/A'}">${game.peakElo || 'Aucun rang'}</span>
+              <span class="game-stat-label"><i class="fa-solid fa-trophy"></i> Rang</span>
+              <span class="game-elo-badge" title="${game.peakElo || 'N/A'}" style="font-size: 0.75rem; padding: 2px 6px;">${game.peakElo || 'Aucun'}</span>
             </div>
 
             <!-- Achievements -->
-            <div style="margin-top: 4px;">
-              <div class="game-stat-row">
+            <div style="margin-top: 2px;">
+              <div class="game-stat-row" style="margin-bottom: 2px;">
                 <span class="game-stat-label"><i class="fa-regular fa-circle-check"></i> Succès</span>
-                <span class="game-stat-value" style="font-size: 0.8rem;">${unlockedAch}/${totalAch} (${progressPercent}%)</span>
+                <span class="game-stat-value" style="font-size: 0.75rem;">${unlockedAch}/${totalAch} (${progressPercent}%)</span>
               </div>
-              <div class="game-achievement-bar">
+              <div class="game-achievement-bar" style="height: 6px;">
                 <div class="game-achievement-progress" style="width: ${progressPercent}%;"></div>
               </div>
             </div>
           </div>
 
           <!-- Actions -->
-          <div style="display: flex; gap: 10px; margin-top: 8px; border-top: 1px solid var(--border-glass); padding-top: 12px; justify-content: flex-end;">
-            <button class="glass-button btn-small text-muted" onclick="openGameModal('${game.id}')" style="padding: 4px 8px; font-size:0.8rem; height: auto;">
+          <div style="display: flex; gap: 8px; margin-top: 4px; border-top: 1px solid var(--border-glass); padding-top: 8px; justify-content: flex-end;">
+            <button class="glass-button btn-small text-muted" onclick="openGameModal('${game.id}')" style="padding: 2px 6px; font-size:0.75rem; height: auto;">
               <i class="fa-regular fa-pen-to-square"></i> Modifier
             </button>
-            <button class="glass-button btn-small danger" onclick="deleteGame('${game.id}')" style="padding: 4px 8px; font-size:0.8rem; height: auto;">
+            <button class="glass-button btn-small danger" onclick="deleteGame('${game.id}')" style="padding: 2px 6px; font-size:0.75rem; height: auto;">
               <i class="fa-regular fa-trash-can"></i> Retirer
             </button>
           </div>
@@ -1973,6 +2095,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Reset form
     gameForm.reset();
     document.getElementById('game-id').value = '';
+    document.getElementById('game-type').value = 'solo';
+    document.getElementById('game-category').value = '';
     document.getElementById('game-modal-title').innerText = "Ajouter un Jeu";
 
     if (id) {
@@ -1981,6 +2105,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('game-id').value = game.id;
         document.getElementById('game-name').value = game.name;
         document.getElementById('game-appid').value = game.appId || '';
+        document.getElementById('game-type').value = game.type || 'solo';
+        document.getElementById('game-category').value = game.category || '';
         document.getElementById('game-playtime').value = game.playtime;
         document.getElementById('game-peakelo').value = game.peakElo || '';
         document.getElementById('game-achievements-unlocked').value = game.achievementsUnlocked || 0;
@@ -2006,6 +2132,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const id = document.getElementById('game-id').value;
       const name = document.getElementById('game-name').value.trim();
       const appId = document.getElementById('game-appid').value.trim();
+      const type = document.getElementById('game-type').value;
+      const category = document.getElementById('game-category').value.trim();
       const playtime = parseFloat(document.getElementById('game-playtime').value) || 0;
       const peakElo = document.getElementById('game-peakelo').value.trim();
       const achievementsUnlocked = parseInt(document.getElementById('game-achievements-unlocked').value) || 0;
@@ -2023,6 +2151,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ...state.games[idx], 
             name, 
             appId, 
+            type,
+            category,
             playtime, 
             peakElo, 
             achievementsUnlocked, 
@@ -2036,6 +2166,8 @@ document.addEventListener('DOMContentLoaded', () => {
           id: 'game-' + Date.now(),
           name,
           appId,
+          type,
+          category,
           playtime,
           peakElo,
           achievementsUnlocked,
@@ -2263,37 +2395,68 @@ document.addEventListener('DOMContentLoaded', () => {
 
           let addedCount = 0;
           let updatedCount = 0;
+          const achievementPromises = [];
 
           steamGames.forEach(item => {
             const appId = String(item.appid);
             const playtime = Math.round((item.playtime_forever || 0) / 60);
 
             const existingIdx = state.games.findIndex(g => g.appId === appId);
+            let targetGame;
             if (existingIdx !== -1) {
               state.games[existingIdx].playtime = playtime;
+              targetGame = state.games[existingIdx];
               updatedCount++;
             } else {
-              state.games.push({
+              targetGame = {
                 id: 'game-' + Date.now() + '-' + appId,
                 name: item.name || 'Jeu Steam Inconnu',
                 appId: appId,
                 playtime: playtime,
                 peakElo: 'Non classé',
                 achievementsUnlocked: 0,
-                achievementsTotal: 0
-              });
+                achievementsTotal: 0,
+                type: 'solo',
+                category: ''
+              };
+              state.games.push(targetGame);
               addedCount++;
             }
+
+            // Fetch achievements in parallel for this game
+            const achievementsUrl = `https://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v1/?key=${apiKey}&steamid=${steamId}&appid=${appId}`;
+            const achPromise = fetchWithProxy(achievementsUrl)
+              .then(achContents => {
+                const achResult = JSON.parse(achContents);
+                if (achResult.playerstats && achResult.playerstats.achievements) {
+                  const achievements = achResult.playerstats.achievements;
+                  targetGame.achievementsTotal = achievements.length;
+                  targetGame.achievementsUnlocked = achievements.filter(a => a.achieved === 1).length;
+                }
+              })
+              .catch(err => {
+                console.error(`Impossible d'importer les succès pour AppID ${appId}:`, err);
+              });
+            achievementPromises.push(achPromise);
           });
 
-          saveState();
-          logActivity('games', `Importation Steam effectuée depuis le profil ${profileName} (${addedCount} ajoutés, ${updatedCount} mis à jour).`);
-          alert(`Importation réussie ! ${addedCount} nouveaux jeux ajoutés et ${updatedCount} mis à jour depuis le profil de ${profileName}.`);
-          
-          confirmImportBtn.disabled = false;
-          confirmImportBtn.innerHTML = "Lancer l'importation";
-          closeImportModal();
-          refreshView('games');
+          Promise.all(achievementPromises).then(() => {
+            saveState();
+            logActivity('games', `Importation Steam effectuée depuis le profil ${profileName} (${addedCount} ajoutés, ${updatedCount} mis à jour, succès synchronisés).`);
+            alert(`Importation réussie ! ${addedCount} nouveaux jeux ajoutés et ${updatedCount} mis à jour depuis le profil de ${profileName}.`);
+            
+            confirmImportBtn.disabled = false;
+            confirmImportBtn.innerHTML = "Lancer l'importation";
+            closeImportModal();
+            refreshView('games');
+          }).catch(err => {
+            console.error("Erreur lors de la synchronisation finale des succès :", err);
+            saveState();
+            confirmImportBtn.disabled = false;
+            confirmImportBtn.innerHTML = "Lancer l'importation";
+            closeImportModal();
+            refreshView('games');
+          });
         })
         .catch(err => {
           console.error(err);
@@ -2368,7 +2531,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
   }
 
+  // Navigation sidebar module updater
+  function updateNavigationModules() {
+    const navFinances = document.querySelector('.nav-item[data-tab="finances"]');
+    const navPayslips = document.querySelector('.nav-item[data-tab="payslips"]');
+    const navGames = document.querySelector('.nav-item[data-tab="games"]');
+    
+    if (state.enabledModules) {
+      if (navFinances) navFinances.style.display = state.enabledModules.finances !== false ? 'block' : 'none';
+      if (navPayslips) navPayslips.style.display = state.enabledModules.payslips !== false ? 'block' : 'none';
+      if (navGames) navGames.style.display = state.enabledModules.games !== false ? 'block' : 'none';
+    }
+  }
+
+  // Bind gaming filter inputs
+  const gameSearchInput = document.getElementById('game-search');
+  if (gameSearchInput) gameSearchInput.addEventListener('input', () => renderGames());
+  const gameTypeSelect = document.getElementById('filter-game-type');
+  if (gameTypeSelect) gameTypeSelect.addEventListener('change', () => renderGames());
+  const gameCategorySelect = document.getElementById('filter-game-category');
+  if (gameCategorySelect) gameCategorySelect.addEventListener('change', () => renderGames());
+  const gameSortSelect = document.getElementById('sort-games-by');
+  if (gameSortSelect) gameSortSelect.addEventListener('change', () => renderGames());
+
   // Initial Load
   loadState();
+  updateNavigationModules();
   renderDashboard(); // Initial tab is dashboard
 });

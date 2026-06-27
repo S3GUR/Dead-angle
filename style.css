@@ -1396,3 +1396,55 @@ body {
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* ============================================== */
+/* COMPACT OVERRIDES FOR GAMES GRID               */
+/* ============================================== */
+.games-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.games-grid .game-card {
+  border-radius: var(--radius-sm);
+  background: rgba(13, 11, 26, 0.35);
+}
+
+.games-grid .game-banner,
+.games-grid .game-banner-placeholder {
+  height: 110px; /* Reduced from 140px */
+}
+
+.games-grid .game-stats {
+  padding: 12px 14px; /* Reduced from 20px */
+  gap: 10px;
+}
+
+.games-grid .game-title {
+  font-size: 1.05rem; /* Reduced from 1.2rem */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
+}
+
+.games-grid .game-stat-rows {
+  gap: 8px; /* Reduced from 12px */
+}
+
+.games-grid .game-stat-row {
+  font-size: 0.82rem; /* Reduced from 0.9rem */
+}
+
+.games-grid .game-elo-badge {
+  padding: 3px 6px; /* Reduced from 6px 12px */
+  font-size: 0.75rem;
+  max-width: 100px;
+}
+
+.games-grid .game-achievement-bar {
+  height: 6px;
+  margin-top: 2px;
+}
+

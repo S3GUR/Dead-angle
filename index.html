@@ -13,7 +13,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
   <!-- Custom Styling -->
-  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
   <!-- Background Ambient Glows -->
@@ -402,7 +402,46 @@
           </div>
         </div>
         
-        <div class="project-grid" id="games-grid">
+        <!-- Games Filter and Sort Bar -->
+        <div class="glass-panel" style="margin-bottom: 20px; padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between;">
+          <div style="display: flex; gap: 10px; flex-grow: 1; flex-wrap: wrap; align-items: center;">
+            <!-- Search -->
+            <div class="form-group" style="margin-bottom: 0; min-width: 180px;">
+              <input type="text" id="game-search" class="glass-input" placeholder="Rechercher un jeu..." style="padding: 6px 12px; font-size: 0.85rem; width: 100%;">
+            </div>
+            
+            <!-- Filter Type -->
+            <div class="form-group" style="margin-bottom: 0;">
+              <select id="filter-game-type" class="glass-input" style="padding: 6px 12px; font-size: 0.85rem; height: auto; width: auto;">
+                <option value="all">Tous les types</option>
+                <option value="solo">Solo</option>
+                <option value="multi">Multijoueur</option>
+                <option value="coop">Coopératif</option>
+              </select>
+            </div>
+
+            <!-- Filter Category -->
+            <div class="form-group" style="margin-bottom: 0;">
+              <select id="filter-game-category" class="glass-input" style="padding: 6px 12px; font-size: 0.85rem; height: auto; width: auto;">
+                <option value="all">Tous les genres</option>
+                <!-- Categories populated dynamically -->
+              </select>
+            </div>
+          </div>
+
+          <!-- Sort Options -->
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="color: var(--text-muted); font-size: 0.85rem;"><i class="fa-solid fa-arrow-down-wide-short"></i> Trier par :</span>
+            <select id="sort-games-by" class="glass-input" style="padding: 6px 12px; font-size: 0.85rem; height: auto; width: auto;">
+              <option value="playtime-desc">Temps de jeu (Max-Min)</option>
+              <option value="playtime-asc">Temps de jeu (Min-Max)</option>
+              <option value="name-asc">Nom (A-Z)</option>
+              <option value="achievements-desc">Succès (%)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="games-grid" id="games-grid">
           <!-- Games cards injected dynamically -->
         </div>
       </section>
@@ -477,6 +516,33 @@
                 <button class="glass-button" id="save-steam-config-btn" style="background: rgba(58, 134, 200, 0.2); border-color: var(--secondary);">
                   <i class="fa-solid fa-floppy-disk"></i> Enregistrer les paramètres Steam
                 </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Module Configuration -->
+          <div class="glass-panel" style="grid-column: span 2;">
+            <div class="card-header">
+              <h3 class="card-title"><i class="fa-solid fa-cubes" style="color: var(--accent-cyan);"></i> Activation des Modules</h3>
+            </div>
+            <div class="card-body" style="display: flex; flex-direction: column; gap: 16px;">
+              <p class="text-muted" style="font-size: 0.9rem; line-height: 1.5;">
+                Activez ou désactivez les sections de l'application selon vos besoins pour simplifier votre navigation.
+              </p>
+              
+              <div style="display: flex; flex-direction: column; gap: 12px;">
+                <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; color: #fff; font-size: 0.95rem;">
+                  <input type="checkbox" id="module-toggle-finances" class="card-task-checkbox" style="width: 18px; height: 18px; position: static; opacity: 1; pointer-events: auto;" checked>
+                  <span>Suivi Financier & Patrimoine</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; color: #fff; font-size: 0.95rem;">
+                  <input type="checkbox" id="module-toggle-payslips" class="card-task-checkbox" style="width: 18px; height: 18px; position: static; opacity: 1; pointer-events: auto;" checked>
+                  <span>Fiches de Paie & Rémunération</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; color: #fff; font-size: 0.95rem;">
+                  <input type="checkbox" id="module-toggle-games" class="card-task-checkbox" style="width: 18px; height: 18px; position: static; opacity: 1; pointer-events: auto;" checked>
+                  <span>Bibliothèque Gaming & Intégration Steam</span>
+                </label>
               </div>
             </div>
           </div>
@@ -780,6 +846,21 @@
 
           <div class="form-row">
             <div class="form-group">
+              <label for="game-type">Type de jeu</label>
+              <select id="game-type" class="glass-input" style="width: 100%;">
+                <option value="solo">Solo (Singleplayer)</option>
+                <option value="multi">Multijoueur (Multiplayer)</option>
+                <option value="coop">Coopératif (Co-op)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="game-category">Genre / Catégorie</label>
+              <input type="text" id="game-category" class="glass-input" placeholder="ex: RPG, FPS, Indé...">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
               <label for="game-playtime">Temps de jeu (heures)</label>
               <input type="number" id="game-playtime" class="glass-input" min="0" value="0">
             </div>
@@ -846,6 +927,6 @@
   </div>
 
   <!-- Custom Scripts -->
-  <script src="app.js?v=4"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>
