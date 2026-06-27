@@ -13,7 +13,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
   <!-- Custom Styling -->
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
   <!-- Background Ambient Glows -->
@@ -393,7 +393,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
           <h2 style="font-family: 'Outfit'; font-size: 1.5rem; color: #fff; margin:0;">Bibliothèque de Jeux</h2>
           <div style="display: flex; gap: 10px;">
-            <button class="glass-button" id="import-profile-steam-btn" style="background: rgba(58, 134, 200, 0.15); border-color: var(--secondary);">
+            <button class="glass-button" id="import-profile-steam-btn" onclick="document.getElementById('steam-import-modal').classList.add('active');" style="background: rgba(58, 134, 200, 0.15); border-color: var(--secondary);">
               <i class="fa-brands fa-steam"></i> Importer via Profil Steam
             </button>
             <button class="glass-button" id="sync-steam-btn" style="display: none; background: rgba(58, 134, 200, 0.25); border-color: var(--secondary);">
@@ -797,28 +797,31 @@
   <!-- MODAL: STEAM PROFILE IMPORT                    -->
   <!-- ============================================== -->
   <div class="modal-overlay" id="steam-import-modal">
-    <div class="modal-content glass-panel" style="max-width: 450px;">
+    <div class="modal-content glass-panel" style="max-width: 500px;">
       <div class="modal-header">
         <h3 class="modal-title">Importer depuis un profil Steam</h3>
-        <button class="modal-close" id="close-steam-import-modal">&times;</button>
+        <button class="modal-close" id="close-steam-import-modal" onclick="document.getElementById('steam-import-modal').classList.remove('active');">&times;</button>
       </div>
       <div class="modal-body">
-        <p class="text-muted" style="font-size: 0.9rem; line-height: 1.5; margin-bottom: 16px;">
-          Entrez votre lien de profil Steam public ou votre identifiant personnalisé (ex : <code>https://steamcommunity.com/id/Wiseee/</code>). Vos détails de jeux doivent être configurés en <strong>Public</strong> dans les paramètres de confidentialité Steam.
+        <p class="text-muted" style="font-size: 0.9rem; line-height: 1.5; margin-bottom: 20px;">
+          Entrez votre lien de profil Steam public ou votre identifiant personnalisé. Vos détails de jeux doivent être configurés en <strong>Public</strong> dans vos paramètres de confidentialité Steam.
         </p>
         <div class="form-group">
-          <label for="steam-profile-url">Lien du profil ou Identifiant *</label>
-          <input type="text" id="steam-profile-url" class="glass-input" placeholder="ex: Wiseee ou https://steamcommunity.com/id/Wiseee/" value="Wiseee" required>
+          <label for="steam-profile-url" style="font-weight: 600; color: #fff; margin-bottom: 8px; display:block;">Lien de votre profil Steam ou Pseudo *</label>
+          <input type="text" id="steam-profile-url" class="glass-input" placeholder="ex: Wiseee ou https://steamcommunity.com/id/Wiseee/" value="Wiseee" required style="width:100%;">
+          <span class="text-muted" style="font-size: 0.78rem; margin-top: 8px; display:block; line-height: 1.4;">
+            <i class="fa-solid fa-circle-question" style="color: var(--accent-cyan);"></i> <strong>Comment trouver votre lien ?</strong> Ouvrez votre profil Steam sur l'application ou sur un navigateur web, copiez l'URL (ex: <code>https://steamcommunity.com/id/Wiseee/</code>) et collez-la ci-dessus.
+          </span>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="glass-button" id="cancel-steam-import-modal">Annuler</button>
+        <button type="button" class="glass-button" id="cancel-steam-import-modal" onclick="document.getElementById('steam-import-modal').classList.remove('active');">Annuler</button>
         <button type="button" class="glass-button primary" id="confirm-steam-import-btn">Lancer l'importation</button>
       </div>
     </div>
   </div>
 
   <!-- Custom Scripts -->
-  <script src="app.js"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>
