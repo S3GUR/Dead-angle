@@ -55,6 +55,12 @@
             <span>Fiches de Paie</span>
           </a>
         </li>
+        <li class="nav-item" data-tab="games">
+          <a class="nav-link">
+            <i class="fa-solid fa-gamepad"></i>
+            <span>Gaming</span>
+          </a>
+        </li>
         <li class="nav-item" data-tab="rates">
           <a class="nav-link">
             <i class="fa-solid fa-percent"></i>
@@ -381,6 +387,22 @@
       </section>
 
       <!-- ============================================== -->
+      <!-- TAB 5: GAMES                                   -->
+      <!-- ============================================== -->
+      <section id="tab-games" class="tab-panel">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+          <h2 style="font-family: 'Outfit'; font-size: 1.5rem; color: #fff; margin:0;">Bibliothèque de Jeux</h2>
+          <button class="glass-button" id="sync-steam-btn" style="display: none; background: rgba(58, 134, 200, 0.2); border-color: var(--secondary);">
+            <i class="fa-brands fa-steam"></i> Synchroniser Steam
+          </button>
+        </div>
+        
+        <div class="project-grid" id="games-grid">
+          <!-- Games cards injected dynamically -->
+        </div>
+      </section>
+
+      <!-- ============================================== -->
       <!-- TAB 6: SETTINGS & DATA                         -->
       <!-- ============================================== -->
       <section id="tab-settings" class="tab-panel">
@@ -420,6 +442,35 @@
               <div>
                 <button class="glass-button danger" id="reset-data-btn">
                   <i class="fa-solid fa-trash-can"></i> Réinitialiser l'application
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Steam Configuration -->
+          <div class="glass-panel" style="grid-column: span 2;">
+            <div class="card-header">
+              <h3 class="card-title"><i class="fa-brands fa-steam" style="color: var(--secondary);"></i> Intégration API Steam (Optionnel)</h3>
+            </div>
+            <div class="card-body" style="display: flex; flex-direction: column; gap: 20px;">
+              <p class="text-muted" style="font-size: 0.9rem; line-height: 1.5;">
+                Renseignez votre clé API Web Steam et votre identifiant Steam (SteamID64) pour synchroniser automatiquement vos temps de jeu et vos succès en un clic. Votre clé reste stockée localement dans votre navigateur.
+              </p>
+              
+              <div class="dashboard-layout" style="grid-template-columns: 1fr 1fr; gap: 16px; padding: 0;">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label for="steam-api-key">Clé API Steam</label>
+                  <input type="password" id="steam-api-key" class="glass-input" placeholder="Entrez votre clé API Web Steam...">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label for="steam-user-id">Steam ID64 (Identifiant à 17 chiffres)</label>
+                  <input type="text" id="steam-user-id" class="glass-input" placeholder="ex: 76561198000000000">
+                </div>
+              </div>
+              
+              <div style="display: flex; justify-content: flex-end;">
+                <button class="glass-button" id="save-steam-config-btn" style="background: rgba(58, 134, 200, 0.2); border-color: var(--secondary);">
+                  <i class="fa-solid fa-floppy-disk"></i> Enregistrer les paramètres Steam
                 </button>
               </div>
             </div>
@@ -676,6 +727,61 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="glass-button" id="cancel-flow-modal">Annuler</button>
+          <button type="submit" class="glass-button primary">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: ADD / EDIT GAME                         -->
+  <!-- ============================================== -->
+  <div class="modal-overlay" id="game-modal">
+    <div class="modal-content glass-panel" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="game-modal-title">Ajouter un Jeu</h3>
+        <button class="modal-close" id="close-game-modal">&times;</button>
+      </div>
+      <form id="game-form">
+        <input type="hidden" id="game-id">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="game-name">Nom du jeu *</label>
+            <input type="text" id="game-name" class="glass-input" placeholder="ex: Counter-Strike 2, Elden Ring, Terraria..." required>
+          </div>
+
+          <div class="form-group">
+            <label for="game-appid">Steam AppID (Optionnel)</label>
+            <input type="text" id="game-appid" class="glass-input" placeholder="ex: 730 pour CS2, 1245620 pour Elden Ring...">
+            <span class="text-muted" style="font-size: 0.75rem; margin-top: 4px; display:block;">
+              <i class="fa-solid fa-circle-info"></i> L'AppID permet d'afficher automatiquement la bannière officielle et de lier le jeu à Steam.
+            </span>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="game-playtime">Temps de jeu (heures)</label>
+              <input type="number" id="game-playtime" class="glass-input" min="0" value="0">
+            </div>
+            <div class="form-group">
+              <label for="game-peakelo">Peak Elo / Plus haut rang</label>
+              <input type="text" id="game-peakelo" class="glass-input" placeholder="ex: Global Elite, Diamond I, 3000 Elo...">
+            </div>
+          </div>
+
+          <div class="form-row" id="manual-achievements-row">
+            <div class="form-group">
+              <label for="game-achievements-unlocked">Succès déverrouillés</label>
+              <input type="number" id="game-achievements-unlocked" class="glass-input" min="0" value="0">
+            </div>
+            <div class="form-group">
+              <label for="game-achievements-total">Nombre total de succès</label>
+              <input type="number" id="game-achievements-total" class="glass-input" min="0" value="0">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="glass-button" id="cancel-game-modal">Annuler</button>
           <button type="submit" class="glass-button primary">Enregistrer</button>
         </div>
       </form>

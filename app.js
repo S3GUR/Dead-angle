@@ -139,6 +139,30 @@ document.addEventListener('DOMContentLoaded', () => {
         frequency: 'weekly'
       }
     ],
+    steamConfig: {
+      apiKey: "",
+      steamId: ""
+    },
+    games: [
+      {
+        id: 'game-1',
+        name: 'Counter-Strike 2',
+        appId: '730',
+        playtime: 1250,
+        peakElo: '15,400 ELO (Premier)',
+        achievementsUnlocked: 1,
+        achievementsTotal: 1
+      },
+      {
+        id: 'game-2',
+        name: 'Elden Ring',
+        appId: '1245620',
+        playtime: 145,
+        peakElo: 'Boss de Fin Battu (100%)',
+        achievementsUnlocked: 36,
+        achievementsTotal: 42
+      }
+    ],
     activities: [
       {
         id: 'act-1',
@@ -177,6 +201,12 @@ document.addEventListener('DOMContentLoaded', () => {
         state = JSON.parse(saved);
         if (!state.recurringFlows) {
           state.recurringFlows = JSON.parse(JSON.stringify(DEFAULT_STATE.recurringFlows));
+        }
+        if (!state.games) {
+          state.games = JSON.parse(JSON.stringify(DEFAULT_STATE.games));
+        }
+        if (!state.steamConfig) {
+          state.steamConfig = { apiKey: "", steamId: "" };
         }
         state.projects.forEach(p => {
           if (!p.tasks) p.tasks = [];
@@ -254,6 +284,12 @@ document.addEventListener('DOMContentLoaded', () => {
       subtitle: "Simulez vos placements et découvrez les meilleurs rendements des banques françaises",
       btnText: "Nouveau Projet",
       btnAction: () => openProjectModal()
+    },
+    games: {
+      title: "Suivi Gaming & Steam",
+      subtitle: "Suivez votre temps de jeu, vos pics d'Elo, vos succès et synchronisez-vous à Steam",
+      btnText: "Ajouter un Jeu",
+      btnAction: () => openGameModal()
     },
     settings: {
       title: "Paramètres & Données",
@@ -342,8 +378,15 @@ document.addEventListener('DOMContentLoaded', () => {
       case 'rates':
         renderRates();
         break;
+      case 'games':
+        renderGames();
+        break;
       case 'settings':
-        // No specific runtime render needed for settings static text
+        // Pre-fill Steam config on render
+        const keyInput = document.getElementById('steam-api-key');
+        const idInput = document.getElementById('steam-user-id');
+        if (keyInput) keyInput.value = state.steamConfig ? (state.steamConfig.apiKey || '') : '';
+        if (idInput) idInput.value = state.steamConfig ? (state.steamConfig.steamId || '') : '';
         break;
     }
   }
@@ -1752,6 +1795,318 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   if (applyTaxCheckbox) {
     applyTaxCheckbox.addEventListener('change', renderRates);
+  }
+
+  // ==============================================
+  // GAMING TAB RENDER & CONTROL ENGINE
+  // ==============================================
+  function renderGames() {
+    const gamesGrid = document.getElementById('games-grid');
+    if (!gamesGrid) return;
+    
+    gamesGrid.innerHTML = '';
+    
+    // Check if Steam sync button should be shown
+    const syncSteamBtn = document.getElementById('sync-steam-btn');
+    if (syncSteamBtn) {
+      if (state.steamConfig && state.steamConfig.apiKey && state.steamConfig.steamId) {
+        syncSteamBtn.style.display = 'inline-flex';
+      } else {
+        syncSteamBtn.style.display = 'none';
+      }
+    }
+
+    if (!state.games || state.games.length === 0) {
+      gamesGrid.innerHTML = `
+        <div class="glass-panel" style="grid-column: span 3; padding: 40px; text-align: center;">
+          <i class="fa-solid fa-gamepad text-muted" style="font-size: 3rem; margin-bottom: 16px; display:block;"></i>
+          <p class="text-muted" style="font-size: 1rem; margin-bottom: 20px;">Aucun jeu dans votre bibliothèque. Commencez à ajouter vos jeux préférés ou connectez votre compte Steam !</p>
+          <button class="glass-button primary" onclick="openGameModal()"><i class="fa-solid fa-plus"></i> Ajouter mon premier jeu</button>
+        </div>
+      `;
+      return;
+    }
+
+    state.games.forEach(game => {
+      const card = document.createElement('div');
+      card.className = 'glass-panel game-card';
+      
+      // Determine banner
+      let bannerHtml = '';
+      if (game.appId) {
+        bannerHtml = `<img src="https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/${game.appId}/header.jpg" class="game-banner" alt="${game.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">`;
+      }
+      bannerHtml += `
+        <div class="game-banner-placeholder" style="${game.appId ? 'display:none;' : ''}">
+          <i class="fa-solid fa-gamepad"></i>
+        </div>
+      `;
+
+      // Achievement progress percentage
+      const totalAch = parseInt(game.achievementsTotal) || 0;
+      const unlockedAch = parseInt(game.achievementsUnlocked) || 0;
+      const progressPercent = totalAch > 0 ? Math.round((unlockedAch / totalAch) * 100) : 0;
+
+      card.innerHTML = `
+        ${bannerHtml}
+        <div class="game-stats">
+          <div class="game-header-area">
+            <h3 class="game-title">${game.name}</h3>
+            ${game.appId ? `
+              <div class="game-appid-badge">
+                <i class="fa-brands fa-steam"></i> AppID: ${game.appId}
+              </div>
+            ` : ''}
+          </div>
+
+          <div class="game-stat-rows">
+            <!-- Playtime -->
+            <div class="game-stat-row">
+              <span class="game-stat-label"><i class="fa-regular fa-clock"></i> Temps de jeu</span>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <button class="glass-button btn-small" onclick="incrementPlaytime('${game.id}', -5)" style="padding: 2px 6px; font-size: 0.8rem; height: auto;">-5h</button>
+                <span class="game-stat-value">${game.playtime} hrs</span>
+                <button class="glass-button btn-small" onclick="incrementPlaytime('${game.id}', 5)" style="padding: 2px 6px; font-size: 0.8rem; height: auto;">+5h</button>
+              </div>
+            </div>
+
+            <!-- Peak Elo / Rank -->
+            <div class="game-stat-row">
+              <span class="game-stat-label"><i class="fa-solid fa-trophy"></i> Meilleur rang</span>
+              <span class="game-elo-badge" title="${game.peakElo || 'N/A'}">${game.peakElo || 'Aucun rang'}</span>
+            </div>
+
+            <!-- Achievements -->
+            <div style="margin-top: 4px;">
+              <div class="game-stat-row">
+                <span class="game-stat-label"><i class="fa-regular fa-circle-check"></i> Succès</span>
+                <span class="game-stat-value" style="font-size: 0.8rem;">${unlockedAch}/${totalAch} (${progressPercent}%)</span>
+              </div>
+              <div class="game-achievement-bar">
+                <div class="game-achievement-progress" style="width: ${progressPercent}%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div style="display: flex; gap: 10px; margin-top: 8px; border-top: 1px solid var(--border-glass); padding-top: 12px; justify-content: flex-end;">
+            <button class="glass-button btn-small text-muted" onclick="openGameModal('${game.id}')" style="padding: 4px 8px; font-size:0.8rem; height: auto;">
+              <i class="fa-regular fa-pen-to-square"></i> Modifier
+            </button>
+            <button class="glass-button btn-small danger" onclick="deleteGame('${game.id}')" style="padding: 4px 8px; font-size:0.8rem; height: auto;">
+              <i class="fa-regular fa-trash-can"></i> Retirer
+            </button>
+          </div>
+        </div>
+      `;
+      gamesGrid.appendChild(card);
+    });
+  }
+
+  window.incrementPlaytime = function(id, amount) {
+    const game = state.games.find(g => g.id === id);
+    if (game) {
+      game.playtime = Math.max(0, game.playtime + amount);
+      saveState();
+      renderGames();
+    }
+  };
+
+  const gameModal = document.getElementById('game-modal');
+  const gameForm = document.getElementById('game-form');
+
+  window.openGameModal = function(id = null) {
+    if (!gameModal) return;
+    
+    // Reset form
+    gameForm.reset();
+    document.getElementById('game-id').value = '';
+    document.getElementById('game-modal-title').innerText = "Ajouter un Jeu";
+
+    if (id) {
+      const game = state.games.find(g => g.id === id);
+      if (game) {
+        document.getElementById('game-id').value = game.id;
+        document.getElementById('game-name').value = game.name;
+        document.getElementById('game-appid').value = game.appId || '';
+        document.getElementById('game-playtime').value = game.playtime;
+        document.getElementById('game-peakelo').value = game.peakElo || '';
+        document.getElementById('game-achievements-unlocked').value = game.achievementsUnlocked || 0;
+        document.getElementById('game-achievements-total').value = game.achievementsTotal || 0;
+        document.getElementById('game-modal-title').innerText = "Modifier le Jeu";
+      }
+    }
+    gameModal.classList.add('active');
+  };
+
+  function closeGameModal() {
+    if (gameModal) gameModal.classList.remove('active');
+  }
+
+  const cancelGameModalBtn = document.getElementById('cancel-game-modal');
+  const closeGameModalBtn = document.getElementById('close-game-modal');
+  if (cancelGameModalBtn) cancelGameModalBtn.addEventListener('click', closeGameModal);
+  if (closeGameModalBtn) closeGameModalBtn.addEventListener('click', closeGameModal);
+
+  if (gameForm) {
+    gameForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const id = document.getElementById('game-id').value;
+      const name = document.getElementById('game-name').value.trim();
+      const appId = document.getElementById('game-appid').value.trim();
+      const playtime = parseFloat(document.getElementById('game-playtime').value) || 0;
+      const peakElo = document.getElementById('game-peakelo').value.trim();
+      const achievementsUnlocked = parseInt(document.getElementById('game-achievements-unlocked').value) || 0;
+      const achievementsTotal = parseInt(document.getElementById('game-achievements-total').value) || 0;
+
+      if (!state.games) {
+        state.games = [];
+      }
+
+      if (id) {
+        // Edit
+        const idx = state.games.findIndex(g => g.id === id);
+        if (idx !== -1) {
+          state.games[idx] = { 
+            ...state.games[idx], 
+            name, 
+            appId, 
+            playtime, 
+            peakElo, 
+            achievementsUnlocked, 
+            achievementsTotal 
+          };
+          logActivity('games', `Jeu '${name}' mis à jour.`);
+        }
+      } else {
+        // Add
+        const newGame = {
+          id: 'game-' + Date.now(),
+          name,
+          appId,
+          playtime,
+          peakElo,
+          achievementsUnlocked,
+          achievementsTotal
+        };
+        state.games.push(newGame);
+        logActivity('games', `Jeu '${name}' ajouté à la bibliothèque.`);
+      }
+
+      saveState();
+      closeGameModal();
+      refreshView('games');
+    });
+  }
+
+  window.deleteGame = function(id) {
+    const game = state.games.find(g => g.id === id);
+    if (game && confirm(`Voulez-vous vraiment retirer "${game.name}" de votre bibliothèque ?`)) {
+      state.games = state.games.filter(g => g.id !== id);
+      logActivity('games', `Jeu '${game.name}' retiré.`);
+      saveState();
+      refreshView('games');
+    }
+  };
+
+  // Steam Param Saving
+  const saveSteamBtn = document.getElementById('save-steam-config-btn');
+  if (saveSteamBtn) {
+    saveSteamBtn.addEventListener('click', () => {
+      const apiKey = document.getElementById('steam-api-key').value.trim();
+      const steamId = document.getElementById('steam-user-id').value.trim();
+
+      if (!state.steamConfig) {
+        state.steamConfig = {};
+      }
+      state.steamConfig.apiKey = apiKey;
+      state.steamConfig.steamId = steamId;
+      
+      saveState();
+      alert("Paramètres Steam enregistrés avec succès !");
+      refreshView('settings');
+    });
+  }
+
+  // Steam Live Sync Engine
+  const syncSteamBtn = document.getElementById('sync-steam-btn');
+  if (syncSteamBtn) {
+    syncSteamBtn.addEventListener('click', () => {
+      if (!state.steamConfig || !state.steamConfig.apiKey || !state.steamConfig.steamId) {
+        alert("Veuillez renseigner votre clé API et SteamID64 dans les paramètres d'abord.");
+        return;
+      }
+
+      syncSteamBtn.disabled = true;
+      syncSteamBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Synchronisation...`;
+
+      const apiKey = state.steamConfig.apiKey;
+      const steamId = state.steamConfig.steamId;
+
+      const ownedGamesUrl = `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${apiKey}&steamid=${steamId}&format=json`;
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(ownedGamesUrl)}`;
+
+      fetch(proxyUrl)
+        .then(response => {
+          if (!response.ok) throw new Error("Erreur de connexion au proxy.");
+          return response.json();
+        })
+        .then(data => {
+          const result = JSON.parse(data.contents);
+          if (!result.response || !result.response.games) {
+            throw new Error("Aucun jeu trouvé ou profil privé.");
+          }
+
+          const steamGames = result.response.games;
+          let syncCount = 0;
+          const achievementPromises = [];
+
+          state.games.forEach(game => {
+            if (!game.appId) return;
+
+            const appIdNum = parseInt(game.appId);
+            const matchedSteamGame = steamGames.find(g => g.appid === appIdNum);
+
+            if (matchedSteamGame) {
+              game.playtime = Math.round((matchedSteamGame.playtime_forever || 0) / 60);
+              syncCount++;
+
+              const achievementsUrl = `https://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v1/?key=${apiKey}&steamid=${steamId}&appid=${game.appId}`;
+              const achievementsProxy = `https://api.allorigins.win/get?url=${encodeURIComponent(achievementsUrl)}`;
+
+              const achPromise = fetch(achievementsProxy)
+                .then(res => res.json())
+                .then(achData => {
+                  const achResult = JSON.parse(achData.contents);
+                  if (achResult.playerstats && achResult.playerstats.achievements) {
+                    const achievements = achResult.playerstats.achievements;
+                    game.achievementsTotal = achievements.length;
+                    game.achievementsUnlocked = achievements.filter(a => a.achieved === 1).length;
+                  }
+                })
+                .catch(err => {
+                  console.error(`Impossible de synchroniser les succès pour AppID ${game.appId}:`, err);
+                });
+              achievementPromises.push(achPromise);
+            }
+          });
+
+          Promise.all(achievementPromises).then(() => {
+            saveState();
+            logActivity('games', `Synchronisation avec Steam terminée (${syncCount} jeux mis à jour).`);
+            alert(`Synchronisation terminée ! ${syncCount} jeux ont été synchronisés.`);
+            syncSteamBtn.disabled = false;
+            syncSteamBtn.innerHTML = `<i class="fa-brands fa-steam"></i> Synchroniser Steam`;
+            renderGames();
+          });
+        })
+        .catch(err => {
+          console.error(err);
+          alert("Erreur lors de la synchronisation Steam. Vérifiez votre clé API, votre SteamID, ou si votre profil de jeux est bien configuré en 'Public'.");
+          syncSteamBtn.disabled = false;
+          syncSteamBtn.innerHTML = `<i class="fa-brands fa-steam"></i> Synchroniser Steam`;
+        });
+    });
   }
 
   // Initial Load
