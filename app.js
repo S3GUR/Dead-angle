@@ -182,7 +182,8 @@ document.addEventListener('DOMContentLoaded', () => {
         text: "Fiche de paie de Mai enregistrée",
         time: 'Il y a 5 jours'
       }
-    ]
+    ],
+    systemLogs: []
   };
 
   // State initialization
@@ -208,12 +209,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!state.steamConfig) {
           state.steamConfig = { apiKey: "", steamId: "" };
         }
+        if (!state.systemLogs) {
+          state.systemLogs = [];
+        }
         state.projects.forEach(p => {
           if (!p.tasks) p.tasks = [];
         });
       } catch (e) {
         console.error("Erreur de lecture du localStorage, chargement des données par défaut", e);
         state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+        logSystemError('state-load', "Erreur de lecture du localStorage", e.message);
       }
     } else {
       state = JSON.parse(JSON.stringify(DEFAULT_STATE));
@@ -256,11 +261,19 @@ document.addEventListener('DOMContentLoaded', () => {
       })
       .catch(err => {
         console.warn("Primary CORS proxy failed, trying fallback...", err);
+        const safeUrl = url.includes('key=') ? url.split('key=')[0] + 'key=HIDDEN_API_KEY_FOR_SECURITY' : url;
+        logSystemError('proxy-warning', `Échec du proxy principal (AllOrigins) pour l'URL : ${safeUrl}`, err.message);
+        
         const fallbackProxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-        return fetch(fallbackProxy).then(res => {
-          if (!res.ok) throw new Error("Fallback CORS proxy returned status " + res.status);
-          return res.text();
-        });
+        return fetch(fallbackProxy)
+          .then(res => {
+            if (!res.ok) throw new Error("Fallback CORS proxy returned status " + res.status);
+            return res.text();
+          })
+          .catch(fallbackErr => {
+            logSystemError('proxy-error', `Échec total des proxies (AllOrigins & CORSProxy.io) pour l'URL : ${safeUrl}`, fallbackErr.message);
+            throw fallbackErr;
+          });
       });
   }
 
@@ -411,6 +424,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const idInput = document.getElementById('steam-user-id');
         if (keyInput) keyInput.value = state.steamConfig ? (state.steamConfig.apiKey || '') : '';
         if (idInput) idInput.value = state.steamConfig ? (state.steamConfig.steamId || '') : '';
+        
+        // Render system logs
+        renderSystemLogs();
+        
+        // Bind clear logs button
+        const clearLogsBtn = document.getElementById('clear-logs-btn');
+        if (clearLogsBtn) {
+          clearLogsBtn.onclick = () => {
+            if (confirm("Voulez-vous vraiment effacer le journal des erreurs ?")) {
+              state.systemLogs = [];
+              saveState();
+              renderSystemLogs();
+            }
+          };
+        }
         break;
     }
   }
@@ -2119,7 +2147,8 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .catch(err => {
           console.error(err);
-          alert("Erreur lors de la synchronisation Steam. Vérifiez votre clé API, votre SteamID, ou si votre profil de jeux est bien configuré en 'Public'.");
+          logSystemError('steam-sync-error', "Erreur lors de la synchronisation Steam", err.message);
+          alert("Erreur lors de la synchronisation Steam. Vérifiez votre journal des erreurs dans l'onglet Paramètres.");
           syncSteamBtn.disabled = false;
           syncSteamBtn.innerHTML = `<i class="fa-brands fa-steam"></i> Synchroniser Steam`;
         });
@@ -2268,11 +2297,75 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .catch(err => {
           console.error(err);
-          alert(`Erreur d'importation : ${err.message}`);
+          logSystemError('steam-import-error', "Erreur lors de l'importation Steam", err.message);
+          alert(`Erreur d'importation : ${err.message}. Vérifiez votre journal des erreurs dans l'onglet Paramètres.`);
           confirmImportBtn.disabled = false;
           confirmImportBtn.innerHTML = "Lancer l'importation";
         });
     });
+  }
+
+  // ==============================================
+  // DIAGNOSTIC LOGS ENGINE
+  // ==============================================
+  function logSystemError(type, message, details = '') {
+    if (!state.systemLogs) {
+      state.systemLogs = [];
+    }
+    const newLog = {
+      id: 'log-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+      timestamp: new Date().toISOString(),
+      type: type,
+      message: message,
+      details: String(details)
+    };
+    state.systemLogs.unshift(newLog);
+    if (state.systemLogs.length > 50) {
+      state.systemLogs.pop();
+    }
+    saveState();
+
+    // Re-render logs if on settings tab
+    const activeTab = document.querySelector('.nav-item.active');
+    if (activeTab && activeTab.getAttribute('data-tab') === 'settings') {
+      renderSystemLogs();
+    }
+  }
+
+  function renderSystemLogs() {
+    const logsContainer = document.getElementById('system-logs-container');
+    if (!logsContainer) return;
+
+    if (!state.systemLogs || state.systemLogs.length === 0) {
+      logsContainer.innerHTML = `<div class="text-muted" style="text-align: center; padding: 20px;">Aucune erreur enregistrée. Tout fonctionne correctement !</div>`;
+      return;
+    }
+
+    logsContainer.innerHTML = state.systemLogs.map(log => {
+      const date = new Date(log.timestamp).toLocaleTimeString('fr-FR') + '.' + String(new Date(log.timestamp).getMilliseconds()).padStart(3, '0');
+      let badgeColor = 'var(--accent-pink)';
+      let badgeBg = 'rgba(244, 63, 94, 0.15)';
+      let badgeText = '#fecdd3';
+      
+      if (log.type === 'proxy-warning') {
+        badgeColor = 'var(--accent-yellow)';
+        badgeBg = 'rgba(234, 179, 8, 0.15)';
+        badgeText = '#fef08a';
+      }
+      
+      return `
+        <div style="background: rgba(8, 7, 17, 0.4); border: 1px solid var(--border-glass); border-radius: var(--radius-sm); padding: 8px 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <span style="color: var(--text-muted); font-size: 0.75rem;">[${date}]</span>
+            <span style="background: ${badgeBg}; color: ${badgeText}; border: 1px solid ${badgeColor}; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 600;">
+              ${log.type.toUpperCase()}
+            </span>
+          </div>
+          <div style="color: #fff; font-weight: 500; margin-bottom: 2px;">${log.message}</div>
+          ${log.details ? `<div style="color: var(--text-muted); font-size: 0.75rem; word-break: break-all;">Détails : ${log.details}</div>` : ''}
+        </div>
+      `;
+    }).join('');
   }
 
   // Initial Load

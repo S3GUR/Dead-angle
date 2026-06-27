@@ -480,6 +480,21 @@
               </div>
             </div>
           </div>
+
+          <!-- Diagnostics & Logs -->
+          <div class="glass-panel" style="grid-column: span 2;">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+              <h3 class="card-title"><i class="fa-solid fa-bug" style="color: var(--accent-pink);"></i> Diagnostic & Journal des Erreurs</h3>
+              <button class="glass-button danger btn-small" id="clear-logs-btn" style="padding: 4px 8px; font-size: 0.8rem; height: auto;">
+                <i class="fa-solid fa-eraser"></i> Effacer les logs
+              </button>
+            </div>
+            <div class="card-body">
+              <div id="system-logs-container" style="max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; font-family: monospace; font-size: 0.85rem;">
+                <!-- Logs rendered dynamically -->
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
