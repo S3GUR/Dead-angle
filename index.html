@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wink - Gestion Personnelle de Projets & Finances</title>
+  <meta name="description" content="Tableau de bord personnel haut de gamme pour structurer vos projets et suivre votre patrimoine financier en toute simplicité.">
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Chart.js for High-End Visual Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Custom Styling -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Background Ambient Glows -->
+  <div class="ambient-glow-1"></div>
+  <div class="ambient-glow-2"></div>
+
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">
+          <i class="fa-solid fa-compass-drafting"></i>
+        </div>
+        <span class="brand-name">Wink</span>
+      </div>
+      
+      <nav class="nav-menu">
+        <li class="nav-item active" data-tab="dashboard">
+          <a class="nav-link">
+            <i class="fa-solid fa-chart-pie"></i>
+            <span>Tableau de bord</span>
+          </a>
+        </li>
+        <li class="nav-item" data-tab="projects">
+          <a class="nav-link">
+            <i class="fa-solid fa-list-check"></i>
+            <span>Projets</span>
+          </a>
+        </li>
+        <li class="nav-item" data-tab="finances">
+          <a class="nav-link">
+            <i class="fa-solid fa-wallet"></i>
+            <span>Finances & Actifs</span>
+          </a>
+        </li>
+        <li class="nav-item" data-tab="payslips">
+          <a class="nav-link">
+            <i class="fa-solid fa-file-invoice-dollar"></i>
+            <span>Fiches de Paie</span>
+          </a>
+        </li>
+        <li class="nav-item" data-tab="settings">
+          <a class="nav-link">
+            <i class="fa-solid fa-sliders"></i>
+            <span>Données & Sauvegarde</span>
+          </a>
+        </li>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div class="user-profile">
+          <div class="user-avatar">W</div>
+          <div class="user-info">
+            <span class="user-name">Mon Espace</span>
+            <span class="user-role">Administrateur</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      
+      <!-- Top Header Area (Updates dynamically based on selected tab) -->
+      <header class="content-header">
+        <div class="header-title-area">
+          <h1 id="page-title">Bonjour !</h1>
+          <p id="page-subtitle">Prêt à mettre de l'ordre dans votre vie aujourd'hui ?</p>
+        </div>
+        <div class="header-actions">
+          <button class="glass-button primary" id="header-action-btn">
+            <i class="fa-solid fa-plus"></i>
+            <span>Nouveau projet</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- ============================================== -->
+      <!-- TAB 1: DASHBOARD                               -->
+      <!-- ============================================== -->
+      <section id="tab-dashboard" class="tab-panel active">
+        <!-- Stats Widgets -->
+        <div class="stats-grid">
+          <div class="stat-card glass-panel">
+            <div class="stat-header">
+              <span class="stat-title">Patrimoine Brut</span>
+              <div class="stat-icon"><i class="fa-solid fa-coins"></i></div>
+            </div>
+            <div class="stat-value" id="stat-net-worth">0,00 €</div>
+            <div class="stat-footer">
+              <span class="stat-trend up" id="stat-worth-trend"><i class="fa-solid fa-arrow-trend-up"></i> +0%</span>
+              <span>ce mois-ci</span>
+            </div>
+          </div>
+          
+          <div class="stat-card glass-panel">
+            <div class="stat-header">
+              <span class="stat-title">Projets Actifs</span>
+              <div class="stat-icon"><i class="fa-solid fa-bars-progress"></i></div>
+            </div>
+            <div class="stat-value" id="stat-active-projects">0</div>
+            <div class="stat-footer">
+              <span id="stat-projects-completion">0 en attente</span>
+            </div>
+          </div>
+
+          <div class="stat-card glass-panel">
+            <div class="stat-header">
+              <span class="stat-title">Temps total investi</span>
+              <div class="stat-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+            </div>
+            <div class="stat-value" id="stat-total-hours">0 h</div>
+            <div class="stat-footer">
+              <span>Heures cumulées sur vos projets</span>
+            </div>
+          </div>
+
+          <div class="stat-card glass-panel">
+            <div class="stat-header">
+              <span class="stat-title">Épargne totale</span>
+              <div class="stat-icon"><i class="fa-solid fa-piggy-bank"></i></div>
+            </div>
+            <div class="stat-value" id="stat-savings">0,00 €</div>
+            <div class="stat-footer">
+              <span id="stat-savings-percentage">0% du patrimoine</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dashboard Layout columns -->
+        <div class="dashboard-layout">
+          <!-- Analytics Graph -->
+          <div class="glass-panel">
+            <div class="card-header">
+              <h3 class="card-title">Répartition financière</h3>
+              <i class="fa-solid fa-chart-line text-muted"></i>
+            </div>
+            <div class="card-body">
+              <div class="chart-container">
+                <canvas id="financialDistributionChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Activity & Notifications -->
+          <div class="glass-panel">
+            <div class="card-header">
+              <h3 class="card-title">Activité Récente</h3>
+              <i class="fa-solid fa-clock-rotate-left text-muted"></i>
+            </div>
+            <div class="card-body">
+              <div class="activity-list" id="dashboard-activity-list">
+                <!-- Injected dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB 2: PROJECTS                                -->
+      <!-- ============================================== -->
+      <section id="tab-projects" class="tab-panel">
+        <div class="projects-header-bar">
+          <div class="filter-tags">
+            <div class="filter-tag active" data-filter="all">Tous</div>
+            <div class="filter-tag" data-filter="in-progress">En cours</div>
+            <div class="filter-tag" data-filter="not-started">Non commencés</div>
+            <div class="filter-tag" data-filter="on-hold">En pause</div>
+            <div class="filter-tag" data-filter="completed">Terminés</div>
+          </div>
+          <button class="glass-button primary" id="add-project-btn-view">
+            <i class="fa-solid fa-plus"></i> Nouveau projet
+          </button>
+        </div>
+
+        <div class="projects-grid" id="projects-container">
+          <!-- Project Cards go here dynamically -->
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB 3: FINANCES                                -->
+      <!-- ============================================== -->
+      <section id="tab-finances" class="tab-panel">
+        <div class="finance-dashboard-grid">
+          <!-- Finance List Section -->
+          <div class="glass-panel">
+            <div class="card-header">
+              <div class="finance-nav">
+                <button class="finance-nav-btn active" data-category="all">Vue d'ensemble</button>
+                <button class="finance-nav-btn" data-category="bank">Comptes courants</button>
+                <button class="finance-nav-btn" data-category="savings">Épargne</button>
+                <button class="finance-nav-btn" data-category="investment">Investissements</button>
+                <button class="finance-nav-btn" data-category="asset">Biens Matériels</button>
+              </div>
+              <button class="glass-button secondary" id="add-finance-btn">
+                <i class="fa-solid fa-plus"></i> Ajouter un actif
+              </button>
+            </div>
+            <div class="card-body">
+              <div class="finance-list-container" id="finances-container">
+                <!-- Finance Rows injected dynamically -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Sidebar Analytics / Actions -->
+          <div class="glass-panel">
+            <div class="card-header">
+              <h3 class="card-title">Résumé de Fortune</h3>
+            </div>
+            <div class="card-body" style="display: flex; flex-direction: column; gap: 24px;">
+              <div>
+                <span class="text-muted" style="font-size: 0.85rem; display:block; margin-bottom: 4px;">PATRIMOINE FINANCIER GLOBAL</span>
+                <h2 class="brand-name" style="font-size: 2.2rem;" id="total-assets-value">0,00 €</h2>
+              </div>
+              
+              <div style="border-top: 1px solid var(--border-glass); padding-top: 16px;">
+                <span class="text-muted" style="font-size: 0.85rem; display:block; margin-bottom: 12px;">RÉPARTITION PAR CATÉGORIE</span>
+                <div class="chart-container" style="height: 180px;">
+                  <canvas id="financeBreakdownChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB 4: PAYSLIPS                                -->
+      <!-- ============================================== -->
+      <section id="tab-payslips" class="tab-panel">
+        <div class="projects-header-bar">
+          <p class="text-muted">Consignez l'historique de vos bulletins de paie pour suivre l'évolution de vos revenus récurrents.</p>
+          <button class="glass-button primary" id="add-payslip-btn">
+            <i class="fa-solid fa-plus"></i> Enregistrer une fiche de paie
+          </button>
+        </div>
+
+        <div class="payslip-grid" id="payslips-container">
+          <!-- Payslips injected here dynamically -->
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB 5: SETTINGS & DATA                         -->
+      <!-- ============================================== -->
+      <section id="tab-settings" class="tab-panel">
+        <div class="dashboard-layout" style="grid-template-columns: 1fr 1fr;">
+          <!-- Export/Import Data -->
+          <div class="glass-panel">
+            <div class="card-header">
+              <h3 class="card-title"><i class="fa-solid fa-database"></i> Sauvegarde & Importation</h3>
+            </div>
+            <div class="card-body" style="display: flex; flex-direction: column; gap: 20px;">
+              <p class="text-muted" style="font-size: 0.9rem; line-height: 1.5;">
+                Toutes vos données Wink sont stockées localement dans votre navigateur internet (LocalStorage). Pour éviter de les perdre en cas de nettoyage, vous pouvez exporter vos données ou importer une sauvegarde existante.
+              </p>
+              
+              <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <button class="glass-button" id="export-data-btn">
+                  <i class="fa-solid fa-download"></i> Exporter mes données (.json)
+                </button>
+                <button class="glass-button" id="import-data-trigger-btn">
+                  <i class="fa-solid fa-upload"></i> Importer une sauvegarde
+                </button>
+                <input type="file" id="import-data-file" style="display: none;" accept=".json">
+              </div>
+            </div>
+          </div>
+
+          <!-- App Information & Reset -->
+          <div class="glass-panel">
+            <div class="card-header">
+              <h3 class="card-title"><i class="fa-solid fa-triangle-exclamation"></i> Administration</h3>
+            </div>
+            <div class="card-body" style="display: flex; flex-direction: column; gap: 20px;">
+              <p class="text-muted" style="font-size: 0.9rem; line-height: 1.5;">
+                Cette action supprimera irréversiblement l'intégralité des projets, tâches, comptes financiers et fiches de paie saisis sur ce navigateur.
+              </p>
+              
+              <div>
+                <button class="glass-button danger" id="reset-data-btn">
+                  <i class="fa-solid fa-trash-can"></i> Réinitialiser l'application
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: ADD / EDIT PROJECT                      -->
+  <!-- ============================================== -->
+  <div class="modal-overlay" id="project-modal">
+    <div class="modal-content glass-panel">
+      <div class="modal-header">
+        <h3 class="modal-title" id="project-modal-title">Créer un nouveau projet</h3>
+        <button class="modal-close" id="close-project-modal">&times;</button>
+      </div>
+      <form id="project-form">
+        <input type="hidden" id="project-id">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="project-name">Nom du projet *</label>
+            <input type="text" id="project-name" class="glass-input" placeholder="ex: Apprendre le piano, Rénover le salon" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="project-desc">Description</label>
+            <textarea id="project-desc" class="glass-textarea" rows="3" placeholder="Description courte des objectifs et des étapes..."></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="project-status">Statut</label>
+              <select id="project-status" class="glass-select">
+                <option value="not-started">Non commencé</option>
+                <option value="in-progress" selected>En cours</option>
+                <option value="on-hold">En pause</option>
+                <option value="completed">Terminé</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="project-progress">Progression (%)</label>
+              <input type="number" id="project-progress" class="glass-input" min="0" max="100" value="0">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="project-time-spent">Temps passé (heures)</label>
+              <input type="number" id="project-time-spent" class="glass-input" min="0" value="0" step="0.5">
+            </div>
+            
+            <div class="form-group">
+              <label for="project-budget">Budget Alloué (€)</label>
+              <input type="number" id="project-budget" class="glass-input" min="0" placeholder="ex: 1500" value="0">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="project-deadline">Date Limite</label>
+            <input type="date" id="project-deadline" class="glass-input">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="glass-button" id="cancel-project-modal">Annuler</button>
+          <button type="submit" class="glass-button primary" id="save-project-btn">Sauvegarder</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: ADD / EDIT FINANCE ITEM                 -->
+  <!-- ============================================== -->
+  <div class="modal-overlay" id="finance-modal">
+    <div class="modal-content glass-panel">
+      <div class="modal-header">
+        <h3 class="modal-title" id="finance-modal-title">Ajouter un élément financier</h3>
+        <button class="modal-close" id="close-finance-modal">&times;</button>
+      </div>
+      <form id="finance-form">
+        <input type="hidden" id="finance-id">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="finance-name">Nom du compte ou de l'actif *</label>
+            <input type="text" id="finance-name" class="glass-input" placeholder="ex: Boursorama Courant, Livret A, Crypto, PC Gaming..." required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="finance-type">Catégorie d'actif *</label>
+              <select id="finance-type" class="glass-select" required>
+                <option value="bank">Compte courant</option>
+                <option value="savings">Épargne</option>
+                <option value="investment">Investissement</option>
+                <option value="asset">Bien Matériel</option>
+                <option value="other">Autre possession</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="finance-balance">Valeur / Solde actuel (€) *</label>
+              <input type="number" id="finance-balance" class="glass-input" step="0.01" placeholder="ex: 4500.50" required>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="glass-button" id="cancel-finance-modal">Annuler</button>
+          <button type="submit" class="glass-button primary">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: ADD / EDIT PAYSLIP                      -->
+  <!-- ============================================== -->
+  <div class="modal-overlay" id="payslip-modal">
+    <div class="modal-content glass-panel">
+      <div class="modal-header">
+        <h3 class="modal-title" id="payslip-modal-title">Enregistrer une fiche de paie</h3>
+        <button class="modal-close" id="close-payslip-modal">&times;</button>
+      </div>
+      <form id="payslip-form">
+        <input type="hidden" id="payslip-id">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="payslip-month">Mois *</label>
+              <select id="payslip-month" class="glass-select" required>
+                <option value="Janvier">Janvier</option>
+                <option value="Février">Février</option>
+                <option value="Mars">Mars</option>
+                <option value="Avril">Avril</option>
+                <option value="Mai">Mai</option>
+                <option value="Juin">Juin</option>
+                <option value="Juillet">Juillet</option>
+                <option value="Août">Août</option>
+                <option value="Septembre">Septembre</option>
+                <option value="Octobre">Octobre</option>
+                <option value="Novembre">Novembre</option>
+                <option value="Décembre">Décembre</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="payslip-year">Année *</label>
+              <input type="number" id="payslip-year" class="glass-input" min="2020" max="2035" value="2026" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="payslip-employer">Employeur / Entreprise *</label>
+            <input type="text" id="payslip-employer" class="glass-input" placeholder="ex: Google France, Auto-Entrepreneur..." required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="payslip-gross">Salaire Brut (€) *</label>
+              <input type="number" id="payslip-gross" class="glass-input" step="0.01" placeholder="ex: 3200" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="payslip-net">Salaire Net Payé (€) *</label>
+              <input type="number" id="payslip-net" class="glass-input" step="0.01" placeholder="ex: 2500" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="payslip-tax">Impôt à la source (€)</label>
+              <input type="number" id="payslip-tax" class="glass-input" step="0.01" placeholder="ex: 120" value="0">
+            </div>
+            <div class="form-group">
+              <label for="payslip-hours">Heures travaillées</label>
+              <input type="number" id="payslip-hours" class="glass-input" step="0.5" placeholder="ex: 151.67" value="151.67">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="glass-button" id="cancel-payslip-modal">Annuler</button>
+          <button type="submit" class="glass-button primary">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Custom Scripts -->
+  <script src="app.js"></script>
+</body>
+</html>
