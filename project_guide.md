@@ -46,7 +46,15 @@ L'application est entièrement développée sans frameworks lourds pour garantir
 *   Consignez vos bulletins de salaire mensuels avec l'employeur, le salaire brut, le salaire net perçu, l'impôt prélevé à la source et le nombre d'heures.
 *   Gerez l'historique complet pour suivre l'évolution de vos revenus salariés au fil des mois.
 
-### 5. Données & Sauvegarde (LocalStorage)
+### 5. Comparateur d'Épargne & Taux
+*   **Données réelles (Juin 2026) :** Comparatif intégrant les livrets réglementés (LEP à 2.5%, Livret A & LDDS à 1.5%) et les livrets en ligne fiscalisés (Distingo Bank, Trade Republic, Bourso+, Fortuneo).
+*   **Simulateur d'intérêts interactif :** Modifiez la somme à simuler (ex: 10 000 €) pour voir immédiatement les gains nets à 1 an générés.
+*   **Intelligence fiscale & plafonds :**
+    *   Les calculs d'intérêts respectent les plafonds de dépôt (ex: Livret A à 22 950 €). Les fonds au-delà du plafond ne génèrent pas d'intérêts simulés sur ce livret.
+    *   Prise en compte de la **Flat Tax française (30%)** : Une option permet de déduire automatiquement les impôts sur les livrets fiscalisés pour comparer les vrais rendements nets.
+*   **Graphique de comparaison (Chart.js) :** Pour identifier d'un coup d'œil le livret le plus avantageux selon la somme simulée.
+
+### 6. Données & Sauvegarde (LocalStorage)
 *   **Export JSON :** Téléchargez l'intégralité de vos données Wink sous forme de fichier `.json` en un clic pour créer des sauvegardes externes (incluant désormais vos tâches et flux récurrents).
 *   **Import JSON :** Restaurez une sauvegarde précédente en glissant/déposant votre fichier JSON.
 *   **Réinitialisation :** Bouton pour effacer l'ensemble de la base locale et recharger les données d'exemple.
