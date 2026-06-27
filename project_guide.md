@@ -55,16 +55,18 @@ L'application est entièrement développée sans frameworks lourds pour garantir
 *   **Graphique de comparaison (Chart.js) :** Pour identifier d'un coup d'œil le livret le plus avantageux selon la somme simulée.
 
 ### 6. Suivi Gaming & Intégration Steam
-*   **Bibliothèque de jeux :** Suivez vos jeux préférés avec leur temps de jeu, votre pic d'Elo ou de rang (ex: Diamond I, Global Elite, 2000 Elo), et votre progression de succès.
-*   **Incrémentation rapide :** Des boutons `+5h` et `-5h` directement sur les cartes de jeux vous permettent d'ajuster votre temps de jeu en un clic.
-*   **Bannières officielles :** Renseignez le Steam AppID (ex: `730` pour CS2, `1245620` pour Elden Ring) pour charger automatiquement l'affiche officielle du jeu depuis le CDN Steam.
-*   **Importation simplifiée (SANS clé API) :** Cliquez sur **« Importer via Profil Steam »** et entrez simplement votre identifiant public (ex : `Wiseee`). L'application va lire votre page de profil public en tâche de fond et importer d'un coup tous vos jeux avec leurs heures de jeu respectives.
-*   **Synchronisation complète (AVEC clé API) :** Si vous renseignez votre clé API Steam et votre SteamID64 dans les paramètres, un bouton de synchronisation complète s'activera pour mettre également à jour vos succès en direct.
+*   **Affichage ultra-compact :** Les cartes ont été redimensionnées pour être plus petites, élégantes et structurées afin de s'intégrer harmonieusement dans une grille responsive moderne.
+*   **Filtres et Triage complexes :** 
+    *   Recherchez vos jeux en direct via la barre de recherche.
+    *   Filtrez par type (Solo, Multijoueur, Coopératif) ou par genre/catégorie (dynamiquement peuplé selon vos entrées : FPS, RPG, etc.).
+    *   Triez par temps de jeu (croissant/décroissant), par ordre alphabétique (A-Z), ou par pourcentage de succès.
+*   **Importation complète avec succès :** L'importation depuis un profil Steam public résout votre profil et télécharge en parallèle **la liste des jeux, les temps de jeu et l'ensemble de vos succès** automatiquement.
+*   **Bannières & Ajustement rapide :** Chargement des headers officiels Steam et boutons d'ajustement rapides `+/- 5h`.
 
-### 7. Données & Sauvegarde (LocalStorage)
-*   **Export JSON :** Téléchargez l'intégralité de vos données Wink (projets, tâches, finances, paies, flux et jeux) sous forme de fichier `.json`.
-*   **Import JSON :** Restaurez une sauvegarde précédente en glissant/déposant votre fichier JSON.
-*   **Réinitialisation :** Bouton pour effacer l'ensemble de la base locale et recharger les données d'exemple.
+### 7. Données, Sauvegarde & Activation des Modules (LocalStorage)
+*   **Activation des modules :** Cochez ou décochez les modules (Finances, Bulletins de salaire, Gaming) dans les paramètres pour afficher/masquer dynamiquement les onglets sur la barre latérale selon vos besoins de navigation.
+*   **Export/Import JSON :** Téléchargez et restaurez l'intégralité de vos données de vie en un clic.
+*   **Réinitialisation :** Effacez la base locale pour recharger les données d'exemple.
 
 ---
 
