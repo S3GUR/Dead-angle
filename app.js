@@ -2268,7 +2268,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const sortBy = document.getElementById('sort-animes-by')?.value || 'rating-desc';
 
     let filteredAnimes = state.animes.filter(anime => {
-      const matchesSearch = anime.name.toLowerCase().includes(searchQuery);
+      const animeName = String(anime.name || 'Anime Inconnu');
+      const matchesSearch = animeName.toLowerCase().includes(searchQuery);
       const matchesStatus = filterStatus === 'all' || anime.status === filterStatus;
       const matchesType = filterType === 'all' || anime.type === filterType;
       return matchesSearch && matchesStatus && matchesType;
@@ -2280,7 +2281,9 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if (sortBy === 'progress-desc') {
         return (b.episodesWatched || 0) - (a.episodesWatched || 0);
       } else if (sortBy === 'name-asc') {
-        return a.name.localeCompare(b.name);
+        const aName = String(a.name || 'Anime Inconnu');
+        const bName = String(b.name || 'Anime Inconnu');
+        return aName.localeCompare(bName);
       }
       return 0;
     });
@@ -2538,7 +2541,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           malData.forEach(item => {
             const malId = String(item.anime_id);
-            const name = item.anime_title || 'Anime Inconnu';
+            const name = String(item.anime_title || 'Anime Inconnu');
             const watched = parseInt(item.num_watched_episodes) || 0;
             const total = parseInt(item.anime_num_episodes) || 0;
             const score = parseInt(item.score) || 0;
@@ -2548,6 +2551,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const existingIdx = state.animes.findIndex(a => a.malId === malId);
             if (existingIdx !== -1) {
+              state.animes[existingIdx].name = name;
               state.animes[existingIdx].episodesWatched = watched;
               state.animes[existingIdx].episodesTotal = total;
               state.animes[existingIdx].rating = score;
