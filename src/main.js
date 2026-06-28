@@ -115,10 +115,7 @@ function switchTab(tabId) {
         headerActionBtn.style.display = 'inline-flex';
         headerActionBtn.querySelector('span').innerText = config.btnText;
         
-        // Clone to clear previous event listeners cleanly
-        const newBtn = headerActionBtn.cloneNode(true);
-        headerActionBtn.parentNode.replaceChild(newBtn, headerActionBtn);
-        newBtn.addEventListener('click', config.btnAction);
+        headerActionBtn.onclick = config.btnAction;
       }
     }
   }
@@ -180,11 +177,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // Default header button listener
-  const headerActionBtn = document.getElementById('header-action-btn');
-  if (headerActionBtn) {
-    headerActionBtn.addEventListener('click', () => ProjectsModule.openProjectModal());
-  }
+
 
   // Bind state updates to refresh the active tab UI automatically
   StateCoordinator.subscribe(state => {
