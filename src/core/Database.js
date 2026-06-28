@@ -1,4 +1,4 @@
-import '../../node_modules/dexie/dist/dexie.js'; // Fallback if using local npm module, but we will use global Dexie from CDN in index.html
+/* global Dexie */
 
 export class WinkDatabase {
   constructor() {
