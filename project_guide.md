@@ -6,136 +6,90 @@ L'interface utilise un style **Dark Mode Glassmorphism** avec des dégradés de 
 
 ---
 
-## 🏗️ Structure du Projet
+## 🏗️ Structure du Projet (Clean Architecture)
 
-L'application est entièrement développée sans frameworks lourds pour garantir une vitesse maximale et aucun besoin de compilation.
+L'application est structurée de manière modulaire en utilisant les modules ES6 natifs, assurant une séparation claire des responsabilités sans aucun framework lourd de build.
 
-*   [index.html](file:///J:/Wink/index.html) : Contient la structure sémantique HTML5 de l'interface, les fenêtres modales de saisie de données et les liaisons avec les CDN pour les polices, icônes et graphiques.
-*   [style.css](file:///J:/Wink/style.css) : Gère toute la charte graphique premium (filtres de flou de verre dépoli, dégradés d'arrière-plan animés, styles de cartes, de formulaires et de barres de progression).
-*   [app.js](file:///J:/Wink/app.js) : Contient la logique applicative, le stockage local (`localStorage`), la mise à jour dynamique des graphiques Chart.js et la gestion des événements utilisateurs.
+*   **[index.html](file:///J:/Wink/index.html)** : Squelette HTML5 de l'interface, définitions des modales de saisie, et importation de la bibliothèque de base de données **[dexie.js](file:///J:/Wink/src/libs/dexie.js)** et du point d'entrée **[main.js](file:///J:/Wink/src/main.js)**.
+*   **[style.css](file:///J:/Wink/style.css)** : Registre central d'importation des feuilles de styles modulaires.
+*   **[src/styles/](file:///J:/Wink/src/styles)** : Fichiers CSS séparés par module :
+    *   `core.css` : Thème global, variables, mise en page et barre latérale.
+    *   `dashboard.css`, `projects.css`, `finance.css`, `payslips.css`, `rates.css`, `gaming.css`, `animes.css`, `settings.css`.
+*   **[src/core/](file:///J:/Wink/src/core)** : Moteurs système fondamentaux :
+    *   `Database.js` : Déclaration et transactions de la base de données IndexedDB (Dexie).
+    *   `StateCoordinator.js` : Gestion de l'état central en mémoire (Pub/Sub) et synchronisation asynchrone.
+    *   `Utils.js` : Utilitaires partagés (formatage monétaire, requêtes avec proxies).
+*   **[src/modules/](file:///J:/Wink/src/modules)** : Classes JavaScript autonomes gérant la logique et le rendu par onglet :
+    *   `DashboardModule.js`, `ProjectsModule.js`, `FinanceModule.js`, `PayslipsModule.js`, `RatesModule.js`, `GamingModule.js`, `AnimesModule.js`, `SettingsModule.js`.
 
 ---
 
 ## 🌟 Fonctionnalités Implémentées
 
 ### 1. Tableau de Bord (Dashboard)
-*   **Indicateurs Clés (KPI) :** Affichage en temps réel du Patrimoine Brut, du nombre de Projets Actifs, du Temps Total investi (heures cumulées) et de l'Épargne totale.
-*   **Graphique de Répartition :** Un graphique circulaire interactif (Doughnut) qui illustre visuellement la part de chaque classe d'actifs (Comptes courants, Épargne, Bourse/Crypto, Matériel).
-*   **Journal d'Activité :** Liste historique dynamique des dernières actions effectuées (création de projets, mise à jour de soldes, etc.).
+*   **Indicateurs Clés (KPI) :** Affichage du Patrimoine Brut, Projets Actifs, Heures investies et Épargne totale.
+*   **Graphique Doughnut :** Illustration de la répartition d'actifs (Courant, Épargne, Bourse/Crypto, Matériel).
+*   **Activités Récentes :** Liste historique dynamique des dernières actions.
 
 ### 2. Gestion des Projets
-*   **Fiches Projets :**
-    *   Statut du projet sous forme de badge coloré (*Non commencé*, *En cours*, *En pause*, *Terminé*).
-    *   **Checklist de Tâches :** Chaque projet peut contenir une liste de tâches avec des niveaux de **priorité** (*Haute*, *Moyenne*, *Faible*).
-    *   **Progression automatique (%) :** Cochez ou décochez les tâches directement depuis la carte du projet pour recalculer et animer la progression en temps réel (ex: 2/4 tâches faites = 50%).
-    *   Temps investi (en heures) avec des boutons **`+`** et **`-`** rapides directement sur la carte.
-    *   Détails sur le budget alloué et la date limite (échéance).
-*   **Système de Filtres :** Filtrez instantanément vos projets par statut (Tous, En cours, Non commencés, En pause, Terminés).
-*   **Formulaire Modale :** Saisir ou modifier un projet et gérer ses tâches en un clic.
+*   **Cartes de Projets :** Progression automatique recalculée selon la checklist des tâches, indicateur de temps investi réglable, budget et date limite.
+*   **Priorités :** Tâches catégorisées par priorité (*Haute*, *Moyenne*, *Faible*).
+*   **Filtres dynamiques :** Filtrage instantané par statut (En cours, Non commencé, En pause, Terminé).
 
-### 3. Finances & Actifs
-*   **Catégorisation libre :** Créez vos comptes bancaires, livrets d'épargne, investissements ou biens matériels.
-*   **Calcul de Fortune Nette :** Somme automatisée de vos actifs calculée en temps réel.
-*   **Flux Récurrents (Cash Flow) :** 
-    *   Saisissez vos revenus (freelancing, loyers perçus, salaires) et vos dépenses fixes (abonnements, loyer, factures).
-    *   Choisissez la fréquence (*Hebdomadaire*, *Mensuelle*, *Annuelle*).
-    *   **Calculateur d'Épargne Réelle :** L'application normalise tous vos flux sur une base mensuelle pour calculer votre **Capacité d'Épargne Mensuelle** nette et votre **Taux d'Engagement des Revenus** (le pourcentage de vos gains absorbé par les charges).
-*   **Graphiques Interactifs :** Doughnut pour la répartition des actifs sur le Tableau de bord et graphique à barres pour l'onglet Finances.
+### 3. Finances & Patrimoine
+*   **Fortune Nette :** Somme automatisée de vos actifs calculée en temps réel.
+*   **Calculateur d'Épargne & Cash Flow :** Saisie des revenus et dépenses fixes, normalisation mensuelle pour en extraire la Capacité d'Épargne Réelle et le Taux d'Engagement des charges.
+*   **Graphiques dynamiques :** Graphique à barres horizontales pour visualiser les soldes.
 
 ### 4. Fiches de Paie (Revenus)
-*   Consignez vos bulletins de salaire mensuels avec l'employeur, le salaire brut, le salaire net perçu, l'impôt prélevé à la source et le nombre d'heures.
-*   Gerez l'historique complet pour suivre l'évolution de vos revenus salariés au fil des mois.
+*   **Liaison Automatique (Règle 5) :** L'enregistrement d'une fiche de paie crédite automatiquement le compte bancaire courant associé.
+*   Suivi historique détaillé des bulletins (Brut, Net, Impôts, Heures).
 
 ### 5. Comparateur d'Épargne & Taux
-*   **Données réelles (Juin 2026) :** Comparatif intégrant les livrets réglementés (LEP à 2.5%, Livret A & LDDS à 1.5%) et les livrets en ligne fiscalisés (Distingo Bank, Trade Republic, Bourso+, Fortuneo).
-*   **Simulateur d'intérêts interactif :** Modifiez la somme à simuler (ex: 10 000 €) pour voir immédiatement les gains nets à 1 an générés.
-*   **Intelligence fiscale & plafonds :**
-    *   Les calculs d'intérêts respectent les plafonds de dépôt (ex: Livret A à 22 950 €). Les fonds au-delà du plafond ne génèrent pas d'intérêts simulés sur ce livret.
-    *   Prise en compte de la **Flat Tax française (30%)** : Une option permet de déduire automatiquement les impôts sur les livrets fiscalisés pour comparer les vrais rendements nets.
-*   **Graphique de comparaison (Chart.js) :** Pour identifier d'un coup d'œil le livret le plus avantageux selon la somme simulée.
+*   Simulateur d'intérêts interactif comparant les livrets réglementés et les livrets en ligne français.
+*   Intègre la Flat Tax (30%) optionnelle et gère les plafonds de dépôts.
 
-### 6. Suivi Gaming & Intégration Steam
-*   **Affichage ultra-compact :** Les cartes ont été redimensionnées pour être plus petites, élégantes et structurées afin de s'intégrer harmonieusement dans une grille responsive moderne.
-*   **Filtres et Triage complexes :** 
-    *   Recherchez vos jeux en direct via la barre de recherche.
-    *   Filtrez par type (Solo, Multijoueur, Coopératif) ou par genre/catégorie (dynamiquement peuplé selon vos entrées : FPS, RPG, etc.).
-    *   Triez par temps de jeu (croissant/décroissant), par ordre alphabétique (A-Z), ou par pourcentage de succès.
-*   **Importation complète avec succès :** L'importation depuis un profil Steam public résout votre profil et télécharge en parallèle **la liste des jeux, les temps de jeu et l'ensemble de vos succès** automatiquement.
-*   **Bannières & Ajustement rapide :** Chargement des headers officiels Steam et boutons d'ajustement rapides `+/- 5h`.
+### 6. Suivi Gaming & Steam
+*   Grille élégante de cartes réduites et fluides.
+*   Recherche en temps réel et filtres complexes (Solo/Multi, Genre) et tris multiples.
+*   **Importateur de Profil Steam :** Récupération asynchrone des jeux, de leur temps de jeu, bannières et succès associés.
 
-### 6.5. Suivi d'Animes & Intégration MyAnimeList
-*   **Bibliothèque d'animes :** Suivez vos animes favoris avec le nombre d'épisodes vus, le score que vous leur attribuez, et leur statut (En cours, Terminé, À voir, En pause, Abandonné).
-*   **Importation en un clic :** Entrez simplement votre pseudo public MyAnimeList. L'application télécharge via le scraper interne de manière transparente l'intégralité de votre liste, vos scores, vos épisodes visionnés et vos affiches officielles (posters).
-*   **Contrôle de visionnage :** Des boutons `-1` et `+1` rapides directement sur les fiches permettent d'incrémenter vos épisodes. La fiche passe automatiquement en « Terminé » quand le total d'épisodes est atteint.
-*   **Filtres et Triage :** Filtrage par statut de visionnage, par type de média (Série TV, Film, OVA, Spécial) et recherche textuelle. Triage par note personnelle ou par progression.
-
-### 7. Données, Sauvegarde & Activation des Modules (LocalStorage)
-*   **Activation des modules :** Cochez ou décochez les modules (Finances, Bulletins de salaire, Gaming, Animes) dans les paramètres pour afficher/masquer dynamiquement les onglets sur la barre latérale selon vos besoins de navigation.
-*   **Export/Import JSON :** Téléchargez et restaurez l'intégralité de vos données de vie en un clic.
-*   **Réinitialisation :** Effacez la base locale pour recharger les données d'exemple.
+### 7. Suivi Animes & MyAnimeList
+*   Visualisation sous forme d'affiches des animés suivis, compteurs d'épisodes et score.
+*   **Importateur MyAnimeList :** Scraper asynchrone pour importer votre liste MAL publique.
 
 ---
 
-## 🔌 Lancement Local
+## 💾 Base de Données : IndexedDB (Dexie.js)
 
-L'application est servie localement sur votre ordinateur. Un serveur Node.js ultra-léger a été lancé en tâche de fond.
+Le stockage historique `localStorage` a été migré vers IndexedDB pour lever les limites de stockage d'images et accélérer les requêtes.
 
-> [!TIP]
-> Vous pouvez accéder à votre application à l'adresse suivante :
-> 👉 **[http://127.0.0.1:8000](http://127.0.0.1:8000)**
+### Schéma des Tables
+Wink structure ses données dans la base de données locale `WinkDatabase` via Dexie :
 
-Pour arrêter ou relancer le serveur manuellement :
-*   Le serveur tourne en tâche de fond via la commande : `npx http-server -p 8000`.
-*   Toutes les données sont stockées de façon sécurisée directement dans la base locale de votre navigateur Web.
+1.  **`settings`** (clé primaire: `key`) :
+    *   `steamConfig` : `{ apiKey: string, steamId: string }`
+    *   `enabledModules` : `{ finances: boolean, payslips: boolean, games: boolean, animes: boolean }`
+2.  **`projects`** (clé primaire: `id`) :
+    *   `name`, `description`, `status`, `progress`, `timeSpent`, `budget`, `deadline`, `tasks: Array`
+3.  **`finances`** (clé primaire: `id`) :
+    *   `name`, `type`, `balance`, `lastUpdated`
+4.  **`recurringFlows`** (clé primaire: `id`) :
+    *   `name`, `type`, `frequency`, `amount`
+5.  **`payslips`** (clé primaire: `id`) :
+    *   `month`, `year`, `employer`, `gross`, `net`, `tax`, `hours`
+6.  **`games`** (clé primaire: `id`, index: `appId`) :
+    *   `name`, `appId`, `playtime`, `peakElo`, `achievementsUnlocked`, `achievementsTotal`, `type`, `category`
+7.  **`animes`** (clé primaire: `id`, index: `malId`) :
+    *   `name`, `malId`, `type`, `episodesWatched`, `episodesTotal`, `rating`, `status`, `image`
+8.  **`activities`** (clé primaire: `id`) :
+    *   `type`, `text`, `time`
+9.  **`systemLogs`** (clé primaire: `id`) :
+    *   `type`, `message`, `details`, `timestamp`
 
 ---
 
-## 📊 Modèle de Données Local (LocalStorage)
-
-Voici la structure de l'objet JSON utilisé pour stocker l'état de l'application :
-
-```json
-{
-  "projects": [
-    {
-      "id": "string (timestamp)",
-      "name": "string",
-      "description": "string",
-      "status": "not-started | in-progress | on-hold | completed",
-      "progress": 0, // 0 to 100
-      "timeSpent": 0, // float
-      "deadline": "YYYY-MM-DD",
-      "budget": 0 // float
-    }
-  ],
-  "finances": [
-    {
-      "id": "string",
-      "name": "string",
-      "type": "bank | savings | investment | asset | other",
-      "balance": 0.0,
-      "lastUpdated": "ISO date string"
-    }
-  ],
-  "payslips": [
-    {
-      "id": "string",
-      "month": "string",
-      "year": 2026,
-      "employer": "string",
-      "gross": 0.0,
-      "net": 0.0,
-      "tax": 0.0,
-      "hours": 0.0
-    }
-  ],
-  "activities": [
-    {
-      "id": "string",
-      "type": "project | finance",
-      "text": "string",
-      "time": "string"
-    }
-  ]
-}
-```
+## ⚡ Optimisation des Transactions
+Afin de préserver la fluidité de l'interface, la persistence des données utilise des **Targeted Updates** :
+*   Les écritures partielles en base sont restreintes uniquement à la table modifiée.
+*   Exemple : Ajuster le temps d'un projet déclenche un `updateState(..., ['projects'])` qui n'écrit que sur la table `projects` (transaction de moins de 2ms), évitant de réécrire les catalogues de jeux/animes volumineux à chaque interaction.
