@@ -240,7 +240,7 @@ class ProjectsModuleClass {
         const current = parseFloat(state.projects[idx].timeSpent || 0);
         state.projects[idx].timeSpent = Math.max(0, current + amount);
       }
-    });
+    }, ['projects']);
   }
 
   toggleCardTask(projId, taskId, checked) {
@@ -255,7 +255,7 @@ class ProjectsModuleClass {
           state.projects[projIdx].progress = Math.round((completedCount / tasks.length) * 100);
         }
       }
-    });
+    }, ['projects']);
   }
 
   openProjectModal(id = null) {
@@ -402,7 +402,7 @@ class ProjectsModuleClass {
         state.projects.push(newProj);
         StateCoordinator.logActivity('project', `Projet '${name}' créé.`);
       }
-    });
+    }, ['projects']);
 
     this.closeProjectModal();
   }
@@ -413,7 +413,7 @@ class ProjectsModuleClass {
       StateCoordinator.updateState(state => {
         state.projects = state.projects.filter(p => p.id !== id);
         StateCoordinator.logActivity('project', `Projet '${proj.name}' supprimé.`);
-      });
+      }, ['projects']);
     }
   }
 }

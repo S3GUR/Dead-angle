@@ -230,7 +230,7 @@ class AnimesModuleClass {
           anime.status = 'completed';
         }
       }
-    });
+    }, ['animes']);
   }
 
   openAnimeModal(id = null) {
@@ -314,7 +314,7 @@ class AnimesModuleClass {
         state.animes.push(newAnime);
         StateCoordinator.logActivity('animes', `Anime '${name}' ajouté.`);
       }
-    });
+    }, ['animes']);
 
     this.closeAnimeModal();
   }
@@ -325,7 +325,7 @@ class AnimesModuleClass {
       StateCoordinator.updateState(state => {
         state.animes = state.animes.filter(a => a.id !== id);
         StateCoordinator.logActivity('animes', `Anime '${anime.name}' retiré.`);
-      });
+      }, ['animes']);
     }
   }
 
@@ -408,7 +408,7 @@ class AnimesModuleClass {
         });
 
         StateCoordinator.logActivity('animes', `Importation MyAnimeList effectuée (${added} ajoutés, ${updated} mis à jour).`);
-      });
+      }, ['animes']);
 
       alert(`Importation réussie ! ${added} animes ajoutés et ${updated} mis à jour.`);
       this.closeImportModal();

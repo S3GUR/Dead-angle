@@ -188,9 +188,19 @@ class StateCoordinatorClass {
   }
 
   // Mutation helpers
-  async updateState(mutationFn) {
+  async updateState(mutationFn, tablesToSave = null) {
     mutationFn(this.state);
-    await this.db.saveState(this.state);
+    if (tablesToSave && Array.isArray(tablesToSave)) {
+      for (const table of tablesToSave) {
+        if (table === 'steamConfig' || table === 'enabledModules') {
+          await this.db.saveSettings(this.state);
+        } else {
+          await this.db.saveTable(table, this.state[table]);
+        }
+      }
+    } else {
+      await this.db.saveState(this.state);
+    }
     this.notify();
   }
 

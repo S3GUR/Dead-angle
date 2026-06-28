@@ -92,7 +92,7 @@ class SettingsModuleClass {
     await StateCoordinator.updateState(state => {
       if (!state.enabledModules) state.enabledModules = {};
       state.enabledModules[moduleKey] = isChecked;
-    });
+    }, ['enabledModules']);
     
     // Update navigation sidebar immediately
     this.updateNavigationModules(StateCoordinator.state);

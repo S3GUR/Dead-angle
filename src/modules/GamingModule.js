@@ -270,7 +270,7 @@ class GamingModuleClass {
       if (game) {
         game.playtime = Math.max(0, game.playtime + amount);
       }
-    });
+    }, ['games']);
   }
 
   openGameModal(id = null) {
@@ -351,7 +351,7 @@ class GamingModuleClass {
         state.games.push(newGame);
         StateCoordinator.logActivity('games', `Jeu '${name}' ajouté à la bibliothèque.`);
       }
-    });
+    }, ['games']);
 
     this.closeGameModal();
   }
@@ -362,7 +362,7 @@ class GamingModuleClass {
       StateCoordinator.updateState(state => {
         state.games = state.games.filter(g => g.id !== id);
         StateCoordinator.logActivity('games', `Jeu '${game.name}' retiré.`);
-      });
+      }, ['games']);
     }
   }
 
@@ -403,7 +403,7 @@ class GamingModuleClass {
       await StateCoordinator.updateState(state => {
         if (!state.steamConfig) state.steamConfig = {};
         state.steamConfig.apiKey = modalApiKey;
-      });
+      }, ['steamConfig']);
     }
 
     let profileName = inputVal;
@@ -439,7 +439,7 @@ class GamingModuleClass {
       await StateCoordinator.updateState(state => {
         if (!state.steamConfig) state.steamConfig = {};
         state.steamConfig.steamId = steamId;
-      });
+      }, ['steamConfig']);
 
       confirmImportBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Récupération des jeux...`;
 
@@ -498,7 +498,7 @@ class GamingModuleClass {
             });
           achievementPromises.push(achPromise);
         });
-      });
+      }, ['games']);
 
       // Wait for achievements
       await Promise.all(achievementPromises);
@@ -506,7 +506,7 @@ class GamingModuleClass {
       // Save state again with achievements loaded
       await StateCoordinator.updateState(state => {
         StateCoordinator.logActivity('games', `Importation Steam effectuée depuis le profil ${profileName} (${addedCount} ajoutés, ${updatedCount} mis à jour).`);
-      });
+      }, ['games']);
 
       alert(`Importation réussie ! ${addedCount} nouveaux jeux ajoutés et ${updatedCount} mis à jour depuis le profil de ${profileName}.`);
       this.closeImportModal();
@@ -585,13 +585,13 @@ class GamingModuleClass {
             });
           achievementPromises.push(achPromise);
         });
-      });
+      }, ['games']);
 
       await Promise.all(achievementPromises);
       
       await StateCoordinator.updateState(state => {
         StateCoordinator.logActivity('games', `Synchronisation Steam effectuée (${addedCount} ajoutés, ${updatedCount} mis à jour).`);
-      });
+      }, ['games']);
 
       alert(`Synchronisation terminée ! ${updatedCount} jeux synchronisés, ${addedCount} nouveaux ajoutés.`);
     } catch (err) {

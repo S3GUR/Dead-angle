@@ -155,7 +155,7 @@ class PayslipsModuleClass {
         salaryAccount.lastUpdated = new Date().toISOString();
         StateCoordinator.logActivity('finance', `Salaire net de ${formatMoney(net)} crédité sur le compte ${salaryAccount.name}.`);
       }
-    });
+    }, ['payslips', 'finances']);
 
     this.closePayslipModal();
   }
@@ -166,7 +166,7 @@ class PayslipsModuleClass {
       StateCoordinator.updateState(state => {
         state.payslips = state.payslips.filter(p => p.id !== id);
         StateCoordinator.logActivity('finance', `Fiche de paie de ${pay.month} ${pay.year} retirée.`);
-      });
+      }, ['payslips']);
     }
   }
 }

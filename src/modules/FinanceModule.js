@@ -433,7 +433,7 @@ class FinanceModuleClass {
         state.finances.push(newItem);
         StateCoordinator.logActivity('finance', `Actif financier '${name}' ajouté.`);
       }
-    });
+    }, ['finances']);
 
     this.closeFinanceModal();
   }
@@ -444,7 +444,7 @@ class FinanceModuleClass {
       StateCoordinator.updateState(state => {
         state.finances = state.finances.filter(f => f.id !== id);
         StateCoordinator.logActivity('finance', `Retrait de l'actif '${item.name}'.`);
-      });
+      }, ['finances']);
     }
   }
 
@@ -507,7 +507,7 @@ class FinanceModuleClass {
         state.recurringFlows.push(newFlow);
         StateCoordinator.logActivity('finance', `Flux récurrent '${name}' enregistré.`);
       }
-    });
+    }, ['recurringFlows']);
 
     this.closeFlowModal();
   }
@@ -518,7 +518,7 @@ class FinanceModuleClass {
       StateCoordinator.updateState(state => {
         state.recurringFlows = state.recurringFlows.filter(f => f.id !== id);
         StateCoordinator.logActivity('finance', `Retrait du flux récurrent '${flow.name}'.`);
-      });
+      }, ['recurringFlows']);
     }
   }
 }

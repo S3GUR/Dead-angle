@@ -107,4 +107,21 @@ export class WinkDatabase {
       }
     );
   }
+
+  // Save a specific table cleanly and efficiently
+  async saveTable(table, items) {
+    if (!items) return;
+    await this.db[table].clear();
+    if (items.length > 0) {
+      await this.db[table].bulkPut(items);
+    }
+  }
+
+  async saveSettings(state) {
+    const settingsToSave = [
+      { key: 'steamConfig', value: state.steamConfig || { apiKey: '', steamId: '' } },
+      { key: 'enabledModules', value: state.enabledModules || { finances: true, payslips: true, games: true, animes: true } }
+    ];
+    await this.db.settings.bulkPut(settingsToSave);
+  }
 }
