@@ -46,3 +46,10 @@ Les données ne doivent pas vivre en silo. Chaque module doit interagir logiquem
 - **Finance ⟷ Paies :** Enregistrer une fiche de paie doit pouvoir créditer automatiquement le compte bancaire courant associé.
 - **Finance ⟷ Projets :** Le budget défini sur un projet doit pouvoir être lié à une catégorie d'actifs financiers de type "projets/dépenses".
 - **Finance ⟷ Gaming/Animes :** L'achat de jeux ou abonnements d'animes doit pouvoir générer des flux de dépenses récurrents ou des transactions ponctuelles dans le module Finance.
+
+---
+
+## 🔒 6. Limites d'Autonomie & Sécurité des Données
+- **Interdiction de merge automatique :** L'agent IA ne doit jamais fusionner (merge) de branche vers `main` de manière autonome sans une validation explicite de l'utilisateur dans le chat.
+- **Protection des données locales :** Toute action ou commande de terminal susceptible de modifier de manière destructive ou de supprimer des fichiers sources ou des bases de données locales (fichiers `.json`, bases Dexie/IndexedDB, `localStorage`) doit faire l'objet d'une validation humaine préalable.
+
