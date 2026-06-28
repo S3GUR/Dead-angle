@@ -5,33 +5,36 @@ class CalendarModuleClass {
     this.currentDate = new Date();
     this.initialized = false;
     this.alertedTaskIds = new Set();
+    this.hours = [
+      8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22
+    ];
   }
 
   init() {
     if (this.initialized) return;
 
-    // Month Navigation
-    const prevBtn = document.getElementById('prev-month-btn');
-    const nextBtn = document.getElementById('next-month-btn');
-    if (prevBtn) prevBtn.addEventListener('click', () => this.changeMonth(-1));
-    if (nextBtn) nextBtn.addEventListener('click', () => this.changeMonth(1));
+    // Week Navigation
+    const prevBtn = document.getElementById('prev-week-btn');
+    const nextBtn = document.getElementById('next-week-btn');
+    if (prevBtn) prevBtn.onclick = () => this.changeWeek(-7);
+    if (nextBtn) nextBtn.onclick = () => this.changeWeek(7);
 
     // Schedule Task Modal trigger
     const scheduleBtn = document.getElementById('schedule-task-btn');
     if (scheduleBtn) {
-      scheduleBtn.addEventListener('click', () => this.openScheduleModal());
+      scheduleBtn.onclick = () => this.openScheduleModal();
     }
 
     // Modal select dependency
     const projSelect = document.getElementById('schedule-project-select');
     if (projSelect) {
-      projSelect.addEventListener('change', (e) => this.loadProjectTasks(e.target.value));
+      projSelect.onchange = (e) => this.loadProjectTasks(e.target.value);
     }
 
     // Form submit
     const form = document.getElementById('schedule-task-form');
     if (form) {
-      form.addEventListener('submit', (e) => this.handleScheduleSubmit(e));
+      form.onsubmit = (e) => this.handleScheduleSubmit(e);
     }
 
     // Start background alert checker
@@ -43,39 +46,91 @@ class CalendarModuleClass {
   render(state) {
     this.init();
     this.renderCalendarGrid(state);
-    this.checkAlerts(state); // check immediately on tab render
+    this.checkAlerts(state);
   }
 
-  changeMonth(direction) {
-    this.currentDate.setMonth(this.currentDate.getMonth() + direction);
+  changeWeek(days) {
+    this.currentDate.setDate(this.currentDate.getDate() + days);
     this.renderCalendarGrid(StateCoordinator.state);
   }
 
-  renderCalendarGrid(state) {
-    const year = this.currentDate.getFullYear();
-    const month = this.currentDate.getMonth();
+  getMonday(d) {
+    const date = new Date(d);
+    const day = date.getDay();
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday (0) to get monday
+    return new Date(date.setDate(diff));
+  }
 
-    // Set Month Title
-    const monthTitle = document.getElementById('calendar-current-month');
-    if (monthTitle) {
-      const monthNames = [
-        "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-        "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
-      ];
-      monthTitle.innerText = `${monthNames[month]} ${year}`;
+  formatDateString(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  renderCalendarGrid(state) {
+    const monday = this.getMonday(this.currentDate);
+    
+    // Generate dates for the 7 days of the week
+    const weekDates = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      weekDates.push(d);
     }
 
-    const grid = document.getElementById('calendar-days-grid');
+    const firstDay = weekDates[0];
+    const lastDay = weekDates[6];
+
+    // Format week title: "28 Juin - 4 Juillet 2026"
+    const monthNames = [
+      "Janv.", "Févr.", "Mars", "Avril", "Mai", "Juin",
+      "Juil.", "Août", "Sept.", "Oct.", "Nov.", "Déc."
+    ];
+    
+    const weekTitle = document.getElementById('calendar-current-week-title');
+    if (weekTitle) {
+      const yearText = firstDay.getFullYear() === lastDay.getFullYear() 
+        ? firstDay.getFullYear() 
+        : `${firstDay.getFullYear()} - ${lastDay.getFullYear()}`;
+      weekTitle.innerText = `Semaine du ${firstDay.getDate()} ${monthNames[firstDay.getMonth()]} au ${lastDay.getDate()} ${monthNames[lastDay.getMonth()]} ${yearText}`;
+    }
+
+    // Render Grid Header
+    const header = document.getElementById('calendar-week-header');
+    if (header) {
+      header.innerHTML = '';
+      
+      // Hours corner cell
+      const hourCorner = document.createElement('div');
+      hourCorner.className = 'header-hour-cell';
+      hourCorner.innerText = 'Heure';
+      header.appendChild(hourCorner);
+
+      // Day headers
+      const dayNames = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
+      const todayStr = this.formatDateString(new Date());
+
+      weekDates.forEach((date, i) => {
+        const dayHeader = document.createElement('div');
+        const dateStr = this.formatDateString(date);
+        const isToday = dateStr === todayStr;
+        
+        dayHeader.className = `header-day-col ${isToday ? 'today' : ''}`;
+        dayHeader.innerHTML = `
+          <span class="day-name">${dayNames[i]}</span>
+          <span class="day-date-number">${date.getDate()}/${String(date.getMonth() + 1).padStart(2, '0')}</span>
+        `;
+        header.appendChild(dayHeader);
+      });
+    }
+
+    // Render Grid Body
+    const grid = document.getElementById('calendar-week-grid');
     if (!grid) return;
     grid.innerHTML = '';
 
-    // Day calculations
-    const firstDayIndex = new Date(year, month, 1).getDay();
-    const startDay = firstDayIndex === 0 ? 6 : firstDayIndex - 1; // European offset: Monday is index 0
-    const totalDays = new Date(year, month + 1, 0).getDate();
-    const prevTotalDays = new Date(year, month, 0).getDate();
-
-    // Map scheduled tasks by date string
+    // Group tasks by date
     const tasksByDate = {};
     if (state.projects) {
       state.projects.forEach(project => {
@@ -85,97 +140,103 @@ class CalendarModuleClass {
               if (!tasksByDate[task.scheduledDate]) {
                 tasksByDate[task.scheduledDate] = [];
               }
-              tasksByDate[task.scheduledDate].push({
-                project,
-                task
-              });
+              tasksByDate[task.scheduledDate].push({ project, task });
             }
           });
         }
       });
     }
 
-    // 1. Render Grey days from previous month
-    for (let i = startDay - 1; i >= 0; i--) {
-      const dayNum = prevTotalDays - i;
-      const prevMonthDate = new Date(year, month - 1, dayNum);
-      const dateStr = this.formatDateString(prevMonthDate);
-      
-      const dayCell = this.createDayCell(dayNum, true, dateStr, tasksByDate[dateStr]);
-      grid.appendChild(dayCell);
-    }
+    // 1. RENDER ALL-DAY (Toute la journée) ROW
+    // Hour label
+    const allDayLabel = document.createElement('div');
+    allDayLabel.className = 'calendar-hour-label-cell all-day';
+    allDayLabel.innerText = 'All-day';
+    grid.appendChild(allDayLabel);
 
-    // 2. Render Active days of current month
-    const todayStr = this.formatDateString(new Date());
-    for (let dayNum = 1; dayNum <= totalDays; dayNum++) {
-      const currentMonthDate = new Date(year, month, dayNum);
-      const dateStr = this.formatDateString(currentMonthDate);
-      const isToday = dateStr === todayStr;
+    // Day cells for All-day row
+    weekDates.forEach(date => {
+      const dateStr = this.formatDateString(date);
+      const allDayTasks = (tasksByDate[dateStr] || []).filter(({ task }) => !task.scheduledTime);
+      const isToday = dateStr === this.formatDateString(new Date());
 
-      const dayCell = this.createDayCell(dayNum, false, dateStr, tasksByDate[dateStr], isToday);
-      grid.appendChild(dayCell);
-    }
+      const cell = document.createElement('div');
+      cell.className = `calendar-week-cell all-day ${isToday ? 'today' : ''}`;
+      cell.onclick = (e) => {
+        if (e.target.closest('.calendar-task-item')) return;
+        this.openScheduleModal(dateStr, '');
+      };
 
-    // 3. Render Grey days of next month to fill grid (42 cells total)
-    const currentCellsCount = startDay + totalDays;
-    const remainingCells = 42 - currentCellsCount;
-    for (let dayNum = 1; dayNum <= remainingCells; dayNum++) {
-      const nextMonthDate = new Date(year, month + 1, dayNum);
-      const dateStr = this.formatDateString(nextMonthDate);
-
-      const dayCell = this.createDayCell(dayNum, true, dateStr, tasksByDate[dateStr]);
-      grid.appendChild(dayCell);
-    }
-  }
-
-  createDayCell(dayNum, isMuted, dateStr, tasks = [], isToday = false) {
-    const cell = document.createElement('div');
-    cell.className = `calendar-day-cell ${isMuted ? 'muted' : ''} ${isToday ? 'today' : ''}`;
-    
-    // Add click event to cell to quickly pre-fill date input
-    cell.addEventListener('click', (e) => {
-      // Prevent opening modal if clicking inside a task or checkbox
-      if (e.target.closest('.calendar-task-item') || e.target.closest('.card-task-checkbox')) return;
-      this.openScheduleModal(dateStr);
+      this.renderTasksIntoCell(cell, allDayTasks);
+      grid.appendChild(cell);
     });
 
-    const dayNumberSpan = document.createElement('span');
-    dayNumberSpan.className = 'day-number';
-    dayNumberSpan.innerText = dayNum;
-    cell.appendChild(dayNumberSpan);
+    // 2. RENDER HOURLY ROWS
+    this.hours.forEach(hour => {
+      // Hour label cell
+      const hourCell = document.createElement('div');
+      hourCell.className = 'calendar-hour-label-cell';
+      hourCell.innerText = `${String(hour).padStart(2, '0')}:00`;
+      grid.appendChild(hourCell);
 
-    if (tasks.length > 0) {
-      const tasksWrapper = document.createElement('div');
-      tasksWrapper.className = 'calendar-day-tasks';
-      
-      tasks.forEach(({ project, task }) => {
-        const taskItem = document.createElement('div');
-        taskItem.className = `calendar-task-item ${task.completed ? 'completed' : ''}`;
-        taskItem.title = `Projet: ${project.name}\nTâche: ${task.text}`;
-
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.className = 'card-task-checkbox';
-        checkbox.checked = task.completed;
-        checkbox.style.cssText = 'width: 14px; height: 14px; position: static; opacity: 1; pointer-events: auto; flex-shrink: 0;';
+      // Day cells for this hour
+      weekDates.forEach(date => {
+        const dateStr = this.formatDateString(date);
+        const isToday = dateStr === this.formatDateString(new Date());
         
-        checkbox.addEventListener('change', (e) => {
-          this.toggleTaskStatus(project.id, task.id, e.target.checked);
+        // Filter tasks that match this hour (e.g. 14:30 matches 14:00 row)
+        const hourTasks = (tasksByDate[dateStr] || []).filter(({ task }) => {
+          if (!task.scheduledTime) return false;
+          const [tHour] = task.scheduledTime.split(':').map(Number);
+          return tHour === hour;
         });
 
-        const label = document.createElement('span');
-        label.className = 'calendar-task-text';
-        label.innerText = (task.scheduledTime ? `[${task.scheduledTime}] ` : '') + task.text;
+        const cell = document.createElement('div');
+        cell.className = `calendar-week-cell ${isToday ? 'today' : ''}`;
+        
+        const prefilledTime = `${String(hour).padStart(2, '0')}:00`;
+        cell.onclick = (e) => {
+          if (e.target.closest('.calendar-task-item')) return;
+          this.openScheduleModal(dateStr, prefilledTime);
+        };
 
-        taskItem.appendChild(checkbox);
-        taskItem.appendChild(label);
-        tasksWrapper.appendChild(taskItem);
+        this.renderTasksIntoCell(cell, hourTasks);
+        grid.appendChild(cell);
       });
+    });
+  }
 
-      cell.appendChild(tasksWrapper);
-    }
+  renderTasksIntoCell(cell, tasks) {
+    if (tasks.length === 0) return;
 
-    return cell;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'calendar-day-tasks';
+
+    tasks.forEach(({ project, task }) => {
+      const taskItem = document.createElement('div');
+      taskItem.className = `calendar-task-item ${task.completed ? 'completed' : ''}`;
+      taskItem.title = `Projet: ${project.name}\nTâche: ${task.text}${task.scheduledTime ? `\nHeure: ${task.scheduledTime}` : ''}`;
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'card-task-checkbox';
+      checkbox.checked = task.completed;
+      checkbox.style.cssText = 'width: 14px; height: 14px; margin: 0; opacity: 1; pointer-events: auto; flex-shrink: 0; cursor: pointer;';
+
+      checkbox.onchange = (e) => {
+        this.toggleTaskStatus(project.id, task.id, e.target.checked);
+      };
+
+      const label = document.createElement('span');
+      label.className = 'calendar-task-text';
+      label.innerText = (task.scheduledTime ? `${task.scheduledTime} ` : '') + task.text;
+
+      taskItem.appendChild(checkbox);
+      taskItem.appendChild(label);
+      wrapper.appendChild(taskItem);
+    });
+
+    cell.appendChild(wrapper);
   }
 
   toggleTaskStatus(projectId, taskId, completed) {
@@ -186,28 +247,21 @@ class CalendarModuleClass {
         if (task) {
           task.completed = completed;
           
-          // Re-calculate project progress %
+          // Re-calculate project progress
           const completedCount = proj.tasks.filter(t => t.completed).length;
           proj.progress = Math.round((completedCount / proj.tasks.length) * 100);
 
-          StateCoordinator.logActivity('project', `Tâche '${task.text}' ${completed ? 'cochée' : 'décochée'} depuis le calendrier.`);
+          StateCoordinator.logActivity('project', `Tâche '${task.text}' ${completed ? 'cochée' : 'décochée'} depuis le calendrier hebdomadaire.`);
         }
       }
     }, ['projects']);
   }
 
-  formatDateString(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
-
-  openScheduleModal(prefilledDate = null) {
+  openScheduleModal(prefilledDate = null, prefilledTime = null) {
     const modal = document.getElementById('schedule-task-modal');
     if (!modal) return;
 
-    // Prefill project dropdown
+    // Populate project dropdown
     const projSelect = document.getElementById('schedule-project-select');
     if (projSelect) {
       projSelect.innerHTML = '<option value="">-- Sélectionnez un projet --</option>';
@@ -216,10 +270,15 @@ class CalendarModuleClass {
       });
     }
 
-    // Prefill date
+    // Prefill date and time inputs
     const dateInput = document.getElementById('schedule-date');
     if (dateInput) {
       dateInput.value = prefilledDate || this.formatDateString(new Date());
+    }
+
+    const timeInput = document.getElementById('schedule-time');
+    if (timeInput) {
+      timeInput.value = prefilledTime || '';
     }
 
     // Reset task select
@@ -248,7 +307,6 @@ class CalendarModuleClass {
 
     taskSelect.innerHTML = '<option value="">-- Sélectionnez la tâche --</option>';
     proj.tasks.forEach(t => {
-      // Add indicator if already scheduled
       const statusText = t.scheduledDate ? ' (Déjà planifiée)' : '';
       taskSelect.innerHTML += `<option value="${t.id}">${t.text}${statusText}</option>`;
     });
@@ -281,7 +339,6 @@ class CalendarModuleClass {
     document.getElementById('schedule-task-form').reset();
   }
 
-  // Active alarm checker
   checkAlerts(state) {
     const now = new Date();
     const currentDateStr = this.formatDateString(now);
@@ -292,13 +349,10 @@ class CalendarModuleClass {
     state.projects.forEach(project => {
       if (project.tasks) {
         project.tasks.forEach(task => {
-          // If task is scheduled, not completed, and date is today
           if (task.scheduledDate === currentDateStr && !task.completed) {
             const alertKey = `${task.id}-${task.scheduledDate}`;
             
-            // If the task has a specific time
             if (task.scheduledTime) {
-              // Trigger alarm if the current time matches the scheduled time and we haven't alerted yet
               if (currentTimeStr >= task.scheduledTime && !this.alertedTaskIds.has(alertKey)) {
                 this.showToastAlert(
                   "Tâche Planifiée Arrivée !",
@@ -307,7 +361,6 @@ class CalendarModuleClass {
                 this.alertedTaskIds.add(alertKey);
               }
             } else {
-              // If no time is specified, alert once during the day when checking
               if (!this.alertedTaskIds.has(alertKey)) {
                 this.showToastAlert(
                   "Tâche Prévue Aujourd'hui !",
@@ -329,7 +382,6 @@ class CalendarModuleClass {
     const toast = document.createElement('div');
     toast.className = 'glass-panel toast-alert';
     
-    // Toast design matching premium aesthetic
     toast.style.cssText = `
       padding: 16px 20px;
       background: rgba(13, 11, 26, 0.9);
@@ -361,20 +413,17 @@ class CalendarModuleClass {
 
     container.appendChild(toast);
     
-    // Trigger CSS slide-up animation programmatically
     setTimeout(() => {
       toast.style.opacity = '1';
       toast.style.transform = 'translateY(0)';
     }, 50);
 
-    // Bind close click
-    toast.querySelector('.modal-close').addEventListener('click', () => {
+    toast.querySelector('.modal-close').onclick = () => {
       toast.style.opacity = '0';
       toast.style.transform = 'translateY(20px)';
       setTimeout(() => toast.remove(), 300);
-    });
+    };
 
-    // Auto remove after 10 seconds
     setTimeout(() => {
       if (toast.parentNode) {
         toast.style.opacity = '0';

@@ -516,25 +516,21 @@
         <div class="calendar-container glass-panel">
           <div class="calendar-header-panel">
             <div class="calendar-nav-controls">
-              <button class="glass-button" id="prev-month-btn"><i class="fa-solid fa-chevron-left"></i></button>
-              <h2 id="calendar-current-month" class="calendar-month-title">Juin 2026</h2>
-              <button class="glass-button" id="next-month-btn"><i class="fa-solid fa-chevron-right"></i></button>
+              <button class="glass-button" id="prev-week-btn"><i class="fa-solid fa-chevron-left"></i> Semaine précédente</button>
+              <h2 id="calendar-current-week-title" class="calendar-month-title" style="min-width: 250px;">Semaine du...</h2>
+              <button class="glass-button" id="next-week-btn">Semaine suivante <i class="fa-solid fa-chevron-right"></i></button>
             </div>
             <button class="glass-button primary" id="schedule-task-btn"><i class="fa-solid fa-clock"></i> Planifier une tâche</button>
           </div>
           
-          <div class="calendar-grid-header">
-            <div>Lun</div>
-            <div>Mar</div>
-            <div>Mer</div>
-            <div>Jeu</div>
-            <div>Ven</div>
-            <div>Sam</div>
-            <div>Dim</div>
+          <div class="calendar-grid-header" id="calendar-week-header">
+            <!-- Headers injected dynamically: Time | Lun Date | Mar Date ... -->
           </div>
           
-          <div class="calendar-grid" id="calendar-days-grid">
-            <!-- Calendar days injected dynamically -->
+          <div class="calendar-week-scroll-container" style="overflow-y: auto; max-height: 600px; border-radius: 0 0 var(--radius-md) var(--radius-md);">
+            <div class="calendar-grid" id="calendar-week-grid">
+              <!-- Weekly grid cells (hours x days) injected dynamically -->
+            </div>
           </div>
         </div>
       </section>
