@@ -84,7 +84,8 @@ class StateCoordinatorClass {
         finances: true,
         payslips: true,
         games: true,
-        animes: true
+        animes: true,
+        calendar: true
       },
       animes: [
         {
@@ -170,7 +171,7 @@ class StateCoordinatorClass {
         activities: dbData.activities || [],
         systemLogs: dbData.systemLogs || [],
         steamConfig: dbData.settings.steamConfig || { apiKey: '', steamId: '' },
-        enabledModules: dbData.settings.enabledModules || { finances: true, payslips: true, games: true, animes: true }
+        enabledModules: dbData.settings.enabledModules || { finances: true, payslips: true, games: true, animes: true, calendar: true }
       };
     }
   }

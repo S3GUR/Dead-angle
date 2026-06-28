@@ -43,6 +43,12 @@
             <span>Projets</span>
           </a>
         </li>
+        <li class="nav-item" data-tab="calendar">
+          <a class="nav-link">
+            <i class="fa-solid fa-calendar-days"></i>
+            <span>Calendrier</span>
+          </a>
+        </li>
         <li class="nav-item" data-tab="finances">
           <a class="nav-link">
             <i class="fa-solid fa-wallet"></i>
@@ -507,6 +513,36 @@
       </section>
 
       <!-- ============================================== -->
+      <!-- TAB: CALENDAR                                  -->
+      <!-- ============================================== -->
+      <section id="tab-calendar" class="tab-panel">
+        <div class="calendar-container glass-panel">
+          <div class="calendar-header-panel">
+            <div class="calendar-nav-controls">
+              <button class="glass-button" id="prev-month-btn"><i class="fa-solid fa-chevron-left"></i></button>
+              <h2 id="calendar-current-month" class="calendar-month-title">Juin 2026</h2>
+              <button class="glass-button" id="next-month-btn"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+            <button class="glass-button primary" id="schedule-task-btn"><i class="fa-solid fa-clock"></i> Planifier une tâche</button>
+          </div>
+          
+          <div class="calendar-grid-header">
+            <div>Lun</div>
+            <div>Mar</div>
+            <div>Mer</div>
+            <div>Jeu</div>
+            <div>Ven</div>
+            <div>Sam</div>
+            <div>Dim</div>
+          </div>
+          
+          <div class="calendar-grid" id="calendar-days-grid">
+            <!-- Calendar days injected dynamically -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================== -->
       <!-- TAB 6: SETTINGS & DATA                         -->
       <!-- ============================================== -->
       <section id="tab-settings" class="tab-panel">
@@ -606,6 +642,10 @@
                 <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; color: #fff; font-size: 0.95rem;">
                   <input type="checkbox" id="module-toggle-animes" class="card-task-checkbox" style="width: 18px; height: 18px; position: static; opacity: 1; pointer-events: auto;" checked>
                   <span>Suivi d'Animes & MyAnimeList</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; color: #fff; font-size: 0.95rem;">
+                  <input type="checkbox" id="module-toggle-calendar" class="card-task-checkbox" style="width: 18px; height: 18px; position: static; opacity: 1; pointer-events: auto;" checked>
+                  <span>Calendrier de Tâches & Projets</span>
                 </label>
               </div>
             </div>
@@ -1086,6 +1126,51 @@
       </div>
     </div>
   </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: SCHEDULE TASK ON CALENDAR               -->
+  <!-- ============================================== -->
+  <div class="modal-overlay" id="schedule-task-modal">
+    <div class="modal-content glass-panel" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Planifier une Tâche sur le Calendrier</h3>
+        <button class="modal-close" onclick="document.getElementById('schedule-task-modal').classList.remove('active');">&times;</button>
+      </div>
+      <form id="schedule-task-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="schedule-project-select">Sélectionner un Projet</label>
+            <select id="schedule-project-select" class="glass-select" required>
+              <!-- Options loaded dynamically -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="schedule-task-select">Sélectionner la Tâche</label>
+            <select id="schedule-task-select" class="glass-select" required>
+              <option value="">-- Choisissez d'abord un projet --</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="schedule-date">Date de planification</label>
+              <input type="date" id="schedule-date" class="glass-input" required>
+            </div>
+            <div class="form-group">
+              <label for="schedule-time">Heure (Optionnel)</label>
+              <input type="time" id="schedule-time" class="glass-input">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="glass-button" onclick="document.getElementById('schedule-task-modal').classList.remove('active');">Annuler</button>
+          <button type="submit" class="glass-button primary">Planifier</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Notification Toast Container -->
+  <div id="wink-toast-container" class="toast-container" style="position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 12px; z-index: 10000; pointer-events: none;"></div>
 
   <!-- Third-party Libraries -->
   <script src="src/libs/dexie.js"></script>

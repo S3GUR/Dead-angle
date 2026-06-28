@@ -68,7 +68,9 @@ class SettingsModuleClass {
     const toggleGaming = document.getElementById('module-toggle-games');
     const toggleAnimes = document.getElementById('module-toggle-animes');
 
-    const config = state.enabledModules || { finances: true, payslips: true, games: true, animes: true };
+    const toggleCalendar = document.getElementById('module-toggle-calendar');
+
+    const config = state.enabledModules || { finances: true, payslips: true, games: true, animes: true, calendar: true };
 
     if (toggleFinances) {
       toggleFinances.checked = config.finances !== false;
@@ -86,6 +88,10 @@ class SettingsModuleClass {
       toggleAnimes.checked = config.animes !== false;
       toggleAnimes.onchange = (e) => this.updateModuleToggle('animes', e.target.checked);
     }
+    if (toggleCalendar) {
+      toggleCalendar.checked = config.calendar !== false;
+      toggleCalendar.onchange = (e) => this.updateModuleToggle('calendar', e.target.checked);
+    }
   }
 
   async updateModuleToggle(moduleKey, isChecked) {
@@ -99,13 +105,14 @@ class SettingsModuleClass {
   }
 
   updateNavigationModules(state) {
-    const config = state.enabledModules || { finances: true, payslips: true, games: true, animes: true };
+    const config = state.enabledModules || { finances: true, payslips: true, games: true, animes: true, calendar: true };
     
     const tabs = {
       finances: document.querySelector('.nav-item[data-tab="finances"]'),
       payslips: document.querySelector('.nav-item[data-tab="payslips"]'),
       games: document.querySelector('.nav-item[data-tab="games"]'),
-      animes: document.querySelector('.nav-item[data-tab="animes"]')
+      animes: document.querySelector('.nav-item[data-tab="animes"]'),
+      calendar: document.querySelector('.nav-item[data-tab="calendar"]')
     };
 
     Object.keys(tabs).forEach(key => {

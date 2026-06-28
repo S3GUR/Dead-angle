@@ -101,7 +101,7 @@ export class WinkDatabase {
         // Settings metadata
         const settingsToSave = [
           { key: 'steamConfig', value: state.steamConfig || { apiKey: '', steamId: '' } },
-          { key: 'enabledModules', value: state.enabledModules || { finances: true, payslips: true, games: true, animes: true } }
+          { key: 'enabledModules', value: state.enabledModules || { finances: true, payslips: true, games: true, animes: true, calendar: true } }
         ];
         await this.db.settings.bulkPut(settingsToSave);
       }
@@ -120,7 +120,7 @@ export class WinkDatabase {
   async saveSettings(state) {
     const settingsToSave = [
       { key: 'steamConfig', value: state.steamConfig || { apiKey: '', steamId: '' } },
-      { key: 'enabledModules', value: state.enabledModules || { finances: true, payslips: true, games: true, animes: true } }
+      { key: 'enabledModules', value: state.enabledModules || { finances: true, payslips: true, games: true, animes: true, calendar: true } }
     ];
     await this.db.settings.bulkPut(settingsToSave);
   }

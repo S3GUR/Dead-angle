@@ -7,6 +7,7 @@ import { RatesModule } from './modules/RatesModule.js';
 import { GamingModule } from './modules/GamingModule.js';
 import { AnimesModule } from './modules/AnimesModule.js';
 import { SettingsModule } from './modules/SettingsModule.js';
+import { CalendarModule } from './modules/CalendarModule.js';
 
 const tabConfigs = {
   dashboard: {
@@ -60,6 +61,12 @@ const tabConfigs = {
     subtitle: "Sauvegardez vos données localement ou importez un fichier externe",
     btnText: "Exporter les Données",
     btnAction: () => SettingsModule.exportData()
+  },
+  calendar: {
+    title: "Calendrier de Vie",
+    subtitle: "Planifiez les tâches de vos projets sur votre calendrier interactif",
+    btnText: "Planifier une tâche",
+    btnAction: () => CalendarModule.openScheduleModal()
   }
 };
 
@@ -150,6 +157,9 @@ function refreshActiveView(tabId, state) {
       if (keyInput) keyInput.value = state.steamConfig?.apiKey || '';
       if (idInput) idInput.value = state.steamConfig?.steamId || '';
       SettingsModule.render(state);
+      break;
+    case 'calendar':
+      CalendarModule.render(state);
       break;
   }
 }
