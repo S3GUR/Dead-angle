@@ -1,0 +1,7 @@
+/* Anime Tab Specific Styles */
+.games-grid .anime-poster {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-bottom: 1px solid var(--border-glass);
+}
