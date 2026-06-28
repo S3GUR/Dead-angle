@@ -22,11 +22,6 @@ class ProjectsModuleClass {
       });
     });
 
-    // Add project triggers
-    const addProjBtnView = document.getElementById('add-project-btn-view');
-    if (addProjBtnView) {
-      addProjBtnView.addEventListener('click', () => this.openProjectModal());
-    }
 
     // Modal tasks addition
     const addTaskToProjectBtn = document.getElementById('add-task-to-project-btn');
