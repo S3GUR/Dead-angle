@@ -5,9 +5,9 @@ class CalendarModuleClass {
     this.currentDate = new Date();
     this.initialized = false;
     this.alertedTaskIds = new Set();
-    this.hours = [
-      8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22
-    ];
+    this.startHour = 8;
+    this.endHour = 22;
+    this.hourHeight = 60; // height in pixels of 1 hour row
   }
 
   init() {
@@ -57,7 +57,7 @@ class CalendarModuleClass {
   getMonday(d) {
     const date = new Date(d);
     const day = date.getDay();
-    const diff = date.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday (0) to get monday
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1);
     return new Date(date.setDate(diff));
   }
 
@@ -82,7 +82,7 @@ class CalendarModuleClass {
     const firstDay = weekDates[0];
     const lastDay = weekDates[6];
 
-    // Format week title: "28 Juin - 4 Juillet 2026"
+    // Format week title
     const monthNames = [
       "Janv.", "Févr.", "Mars", "Avril", "Mai", "Juin",
       "Juil.", "Août", "Sept.", "Oct.", "Nov.", "Déc."
@@ -101,7 +101,7 @@ class CalendarModuleClass {
     if (header) {
       header.innerHTML = '';
       
-      // Hours corner cell
+      // Corner label
       const hourCorner = document.createElement('div');
       hourCorner.className = 'header-hour-cell';
       hourCorner.innerText = 'Heure';
@@ -147,103 +147,177 @@ class CalendarModuleClass {
       });
     }
 
-    // 1. RENDER ALL-DAY (Toute la journée) ROW
-    // Hour label
+    // 1. RENDER HOUR COLUMN LABELS & TIMELINE BACKGROUND
+    const hourLabelCol = document.createElement('div');
+    hourLabelCol.className = 'hour-labels-column';
+    
+    // Add "All-day" row label
     const allDayLabel = document.createElement('div');
     allDayLabel.className = 'calendar-hour-label-cell all-day';
-    allDayLabel.innerText = 'All-day';
-    grid.appendChild(allDayLabel);
+    allDayLabel.innerText = 'Toute la journée';
+    allDayLabel.style.height = '60px';
+    hourLabelCol.appendChild(allDayLabel);
 
-    // Day cells for All-day row
+    // Add hourly row labels
+    for (let h = this.startHour; h <= this.endHour; h++) {
+      const lbl = document.createElement('div');
+      lbl.className = 'calendar-hour-label-cell';
+      lbl.innerText = `${String(h).padStart(2, '0')}:00`;
+      lbl.style.height = `${this.hourHeight}px`;
+      hourLabelCol.appendChild(lbl);
+    }
+    grid.appendChild(hourLabelCol);
+
+    // 2. RENDER DAY COLUMNS
+    const todayStr = this.formatDateString(new Date());
+    
     weekDates.forEach(date => {
       const dateStr = this.formatDateString(date);
-      const allDayTasks = (tasksByDate[dateStr] || []).filter(({ task }) => !task.scheduledTime);
-      const isToday = dateStr === this.formatDateString(new Date());
-
-      const cell = document.createElement('div');
-      cell.className = `calendar-week-cell all-day ${isToday ? 'today' : ''}`;
-      cell.onclick = (e) => {
+      const isToday = dateStr === todayStr;
+      
+      const dayColumn = document.createElement('div');
+      dayColumn.className = `calendar-day-column ${isToday ? 'today' : ''}`;
+      
+      // A. All-day cell at top of the day column
+      const allDayCell = document.createElement('div');
+      allDayCell.className = 'calendar-day-all-day-slot';
+      allDayCell.style.height = '60px';
+      allDayCell.onclick = (e) => {
         if (e.target.closest('.calendar-task-item')) return;
         this.openScheduleModal(dateStr, '');
       };
 
-      this.renderTasksIntoCell(cell, allDayTasks);
-      grid.appendChild(cell);
-    });
+      const dayAllDayTasks = (tasksByDate[dateStr] || []).filter(({ task }) => !task.scheduledTime);
+      this.renderAllDayTasks(allDayCell, dayAllDayTasks);
+      dayColumn.appendChild(allDayCell);
 
-    // 2. RENDER HOURLY ROWS
-    this.hours.forEach(hour => {
-      // Hour label cell
-      const hourCell = document.createElement('div');
-      hourCell.className = 'calendar-hour-label-cell';
-      hourCell.innerText = `${String(hour).padStart(2, '0')}:00`;
-      grid.appendChild(hourCell);
+      // B. Hourly timeline block container
+      const timelineBody = document.createElement('div');
+      timelineBody.className = 'calendar-day-timeline-body';
+      const totalHours = this.endHour - this.startHour + 1;
+      timelineBody.style.height = `${totalHours * this.hourHeight}px`;
 
-      // Day cells for this hour
-      weekDates.forEach(date => {
-        const dateStr = this.formatDateString(date);
-        const isToday = dateStr === this.formatDateString(new Date());
+      // Render background horizontal gridlines
+      for (let i = 0; i < totalHours; i++) {
+        const line = document.createElement('div');
+        line.className = 'timeline-gridline';
+        line.style.height = `${this.hourHeight}px`;
+        timelineBody.appendChild(line);
+      }
+
+      // Add click handler to timeline body to pre-fill specific time
+      timelineBody.onclick = (e) => {
+        if (e.target.closest('.calendar-task-item')) return;
+        const rect = timelineBody.getBoundingClientRect();
+        const clickY = e.clientY - rect.top;
+        const hourFloat = this.startHour + (clickY / this.hourHeight);
         
-        // Filter tasks that match this hour (e.g. 14:30 matches 14:00 row)
-        const hourTasks = (tasksByDate[dateStr] || []).filter(({ task }) => {
-          if (!task.scheduledTime) return false;
-          const [tHour] = task.scheduledTime.split(':').map(Number);
-          return tHour === hour;
-        });
-
-        const cell = document.createElement('div');
-        cell.className = `calendar-week-cell ${isToday ? 'today' : ''}`;
+        const hourInt = Math.floor(hourFloat);
+        const minutesInt = Math.floor((hourFloat - hourInt) * 60);
         
-        const prefilledTime = `${String(hour).padStart(2, '0')}:00`;
-        cell.onclick = (e) => {
-          if (e.target.closest('.calendar-task-item')) return;
-          this.openScheduleModal(dateStr, prefilledTime);
-        };
+        // Round to nearest 15 minutes
+        let roundedMinutes = Math.round(minutesInt / 15) * 15;
+        let finalHour = hourInt;
+        if (roundedMinutes === 60) {
+          roundedMinutes = 0;
+          finalHour += 1;
+        }
+        
+        const finalTime = `${String(finalHour).padStart(2, '0')}:${String(roundedMinutes).padStart(2, '0')}`;
+        this.openScheduleModal(dateStr, finalTime);
+      };
 
-        this.renderTasksIntoCell(cell, hourTasks);
-        grid.appendChild(cell);
-      });
+      // C. Render timed tasks absolutely positioned inside the timeline body
+      const timedTasks = (tasksByDate[dateStr] || []).filter(({ task }) => task.scheduledTime);
+      this.renderTimedTasks(timelineBody, timedTasks);
+
+      dayColumn.appendChild(timelineBody);
+      grid.appendChild(dayColumn);
     });
   }
 
-  renderTasksIntoCell(cell, tasks) {
+  renderAllDayTasks(container, tasks) {
     if (tasks.length === 0) return;
-
-    const wrapper = document.createElement('div');
-    wrapper.className = 'calendar-day-tasks';
-
+    
     tasks.forEach(({ project, task }) => {
-      const taskItem = document.createElement('div');
-      taskItem.className = `calendar-task-item ${task.completed ? 'completed' : ''}`;
-      taskItem.title = `Projet: ${project.name}\nTâche: ${task.text}${task.scheduledTime ? `\nHeure: ${task.scheduledTime}` : ''}`;
-
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.className = 'card-task-checkbox';
-      checkbox.checked = task.completed;
-      checkbox.style.cssText = 'width: 14px; height: 14px; margin: 0; opacity: 1; pointer-events: auto; flex-shrink: 0; cursor: pointer;';
-
-      checkbox.onchange = (e) => {
-        this.toggleTaskStatus(project.id, task.id, e.target.checked);
-      };
-
-      const label = document.createElement('span');
-      label.className = 'calendar-task-text';
-      label.innerText = (task.scheduledTime ? `${task.scheduledTime} ` : '') + task.text;
-
-      taskItem.appendChild(checkbox);
-      taskItem.appendChild(label);
-      wrapper.appendChild(taskItem);
+      const taskItem = this.createTaskBlock(project, task);
+      taskItem.classList.add('all-day-block');
+      container.appendChild(taskItem);
     });
+  }
 
-    cell.appendChild(wrapper);
+  renderTimedTasks(container, tasks) {
+    tasks.forEach(({ project, task }) => {
+      const [hours, minutes] = task.scheduledTime.split(':').map(Number);
+      const startHourFloat = hours + minutes / 60;
+      
+      // Calculate start and end range
+      if (startHourFloat >= this.startHour && startHourFloat <= this.endHour + 1) {
+        const duration = parseFloat(task.scheduledDuration || 1);
+        const top = (startHourFloat - this.startHour) * this.hourHeight;
+        const height = duration * this.hourHeight;
+        
+        const block = this.createTaskBlock(project, task);
+        block.style.position = 'absolute';
+        block.style.top = `${top}px`;
+        block.style.height = `${height}px`;
+        block.style.left = '4px';
+        block.style.right = '4px';
+        block.style.zIndex = '10';
+
+        // Print extra info inside block if tall enough
+        if (duration >= 1) {
+          const info = document.createElement('div');
+          info.className = 'task-duration-info';
+          info.innerText = `${task.scheduledTime} (${duration}h)`;
+          block.appendChild(info);
+        }
+
+        container.appendChild(block);
+      }
+    });
+  }
+
+  createTaskBlock(project, task) {
+    const taskItem = document.createElement('div');
+    taskItem.className = `calendar-task-item ${task.completed ? 'completed' : ''}`;
+    taskItem.title = `Projet: ${project.name}\nTâche: ${task.name}\nHeure: ${task.scheduledTime || 'Toute la journée'}${task.scheduledDuration ? `\nDurée: ${task.scheduledDuration}h` : ''}`;
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'card-task-checkbox';
+    checkbox.checked = task.completed;
+    checkbox.style.cssText = 'width: 14px; height: 14px; margin: 0; opacity: 1; pointer-events: auto; flex-shrink: 0; cursor: pointer;';
+
+    checkbox.onchange = (e) => {
+      this.toggleTaskStatus(project.id, task.id, e.target.checked);
+    };
+
+    const textWrapper = document.createElement('div');
+    textWrapper.style.cssText = 'display: flex; flex-direction: column; overflow: hidden;';
+
+    const label = document.createElement('span');
+    label.className = 'calendar-task-text';
+    label.innerText = task.name;
+
+    const projLabel = document.createElement('span');
+    projLabel.style.cssText = 'font-size: 0.65rem; color: var(--text-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;';
+    projLabel.innerText = project.name;
+
+    textWrapper.appendChild(label);
+    textWrapper.appendChild(projLabel);
+
+    taskItem.appendChild(checkbox);
+    taskItem.appendChild(textWrapper);
+
+    return taskItem;
   }
 
   toggleTaskStatus(projectId, taskId, completed) {
     StateCoordinator.updateState(state => {
-      const proj = state.projects.find(p => p.id === projectId);
+      const proj = state.projects.find(p => String(p.id) === String(projectId));
       if (proj && proj.tasks) {
-        const task = proj.tasks.find(t => t.id === taskId);
+        const task = proj.tasks.find(t => String(t.id) === String(taskId));
         if (task) {
           task.completed = completed;
           
@@ -251,7 +325,7 @@ class CalendarModuleClass {
           const completedCount = proj.tasks.filter(t => t.completed).length;
           proj.progress = Math.round((completedCount / proj.tasks.length) * 100);
 
-          StateCoordinator.logActivity('project', `Tâche '${task.text}' ${completed ? 'cochée' : 'décochée'} depuis le calendrier hebdomadaire.`);
+          StateCoordinator.logActivity('project', `Tâche '${task.name}' ${completed ? 'cochée' : 'décochée'} depuis le calendrier.`);
         }
       }
     }, ['projects']);
@@ -281,6 +355,10 @@ class CalendarModuleClass {
       timeInput.value = prefilledTime || '';
     }
 
+    // Reset duration
+    const durInput = document.getElementById('schedule-duration');
+    if (durInput) durInput.value = '1';
+
     // Reset task select
     const taskSelect = document.getElementById('schedule-task-select');
     if (taskSelect) {
@@ -299,7 +377,7 @@ class CalendarModuleClass {
       return;
     }
 
-    const proj = StateCoordinator.state.projects.find(p => p.id === projectId);
+    const proj = StateCoordinator.state.projects.find(p => String(p.id) === String(projectId));
     if (!proj || !proj.tasks || proj.tasks.length === 0) {
       taskSelect.innerHTML = "<option value=''>Aucune tâche disponible dans ce projet</option>";
       return;
@@ -308,7 +386,7 @@ class CalendarModuleClass {
     taskSelect.innerHTML = '<option value="">-- Sélectionnez la tâche --</option>';
     proj.tasks.forEach(t => {
       const statusText = t.scheduledDate ? ' (Déjà planifiée)' : '';
-      taskSelect.innerHTML += `<option value="${t.id}">${t.text}${statusText}</option>`;
+      taskSelect.innerHTML += `<option value="${t.id}">${t.name}${statusText}</option>`;
     });
   }
 
@@ -319,18 +397,20 @@ class CalendarModuleClass {
     const taskId = document.getElementById('schedule-task-select').value;
     const date = document.getElementById('schedule-date').value;
     const time = document.getElementById('schedule-time').value;
+    const duration = parseFloat(document.getElementById('schedule-duration').value) || 1;
 
     if (!projectId || !taskId || !date) return;
 
     StateCoordinator.updateState(state => {
-      const proj = state.projects.find(p => p.id === projectId);
+      const proj = state.projects.find(p => String(p.id) === String(projectId));
       if (proj && proj.tasks) {
-        const task = proj.tasks.find(t => t.id === taskId);
+        const task = proj.tasks.find(t => String(t.id) === String(taskId));
         if (task) {
           task.scheduledDate = date;
           task.scheduledTime = time || '';
+          task.scheduledDuration = duration;
           
-          StateCoordinator.logActivity('project', `Tâche '${task.text}' planifiée pour le ${date} ${time ? `à ${time}` : ''}.`);
+          StateCoordinator.logActivity('project', `Tâche '${task.name}' planifiée pour le ${date} ${time ? `à ${time}` : ''} pour ${duration}h.`);
         }
       }
     }, ['projects']);
@@ -356,7 +436,7 @@ class CalendarModuleClass {
               if (currentTimeStr >= task.scheduledTime && !this.alertedTaskIds.has(alertKey)) {
                 this.showToastAlert(
                   "Tâche Planifiée Arrivée !",
-                  `La tâche <strong>${task.text}</strong> du projet <em>${project.name}</em> est planifiée pour aujourd'hui à ${task.scheduledTime}.`
+                  `La tâche <strong>${task.name}</strong> du projet <em>${project.name}</em> est planifiée pour aujourd'hui à ${task.scheduledTime}.`
                 );
                 this.alertedTaskIds.add(alertKey);
               }
@@ -364,7 +444,7 @@ class CalendarModuleClass {
               if (!this.alertedTaskIds.has(alertKey)) {
                 this.showToastAlert(
                   "Tâche Prévue Aujourd'hui !",
-                  `La tâche <strong>${task.text}</strong> du projet <em>${project.name}</em> est planifiée pour aujourd'hui.`
+                  `La tâche <strong>${task.name}</strong> du projet <em>${project.name}</em> est planifiée pour aujourd'hui.`
                 );
                 this.alertedTaskIds.add(alertKey);
               }

@@ -230,7 +230,7 @@ class ProjectsModuleClass {
 
   adjustProjectHours(id, amount) {
     StateCoordinator.updateState(state => {
-      const idx = state.projects.findIndex(p => p.id === id);
+      const idx = state.projects.findIndex(p => String(p.id) === String(id));
       if (idx !== -1) {
         const current = parseFloat(state.projects[idx].timeSpent || 0);
         state.projects[idx].timeSpent = Math.max(0, current + amount);
@@ -240,9 +240,9 @@ class ProjectsModuleClass {
 
   toggleCardTask(projId, taskId, checked) {
     StateCoordinator.updateState(state => {
-      const projIdx = state.projects.findIndex(p => p.id === projId);
+      const projIdx = state.projects.findIndex(p => String(p.id) === String(projId));
       if (projIdx !== -1) {
-        const taskIdx = state.projects[projIdx].tasks.findIndex(t => t.id === taskId);
+        const taskIdx = state.projects[projIdx].tasks.findIndex(t => String(t.id) === String(taskId));
         if (taskIdx !== -1) {
           state.projects[projIdx].tasks[taskIdx].completed = checked;
           const tasks = state.projects[projIdx].tasks;
@@ -376,7 +376,7 @@ class ProjectsModuleClass {
     StateCoordinator.updateState(state => {
       if (id) {
         // Edit
-        const idx = state.projects.findIndex(p => p.id === id);
+        const idx = state.projects.findIndex(p => String(p.id) === String(id));
         if (idx !== -1) {
           state.projects[idx] = { ...state.projects[idx], name, description, status, progress, timeSpent, budget, deadline, tasks: this.modalTasks };
           StateCoordinator.logActivity('project', `Projet '${name}' mis à jour.`);
@@ -403,10 +403,10 @@ class ProjectsModuleClass {
   }
 
   deleteProject(id) {
-    const proj = StateCoordinator.state.projects.find(p => p.id === id);
+    const proj = StateCoordinator.state.projects.find(p => String(p.id) === String(id));
     if (proj && confirm(`Voulez-vous vraiment supprimer le projet "${proj.name}" ?`)) {
       StateCoordinator.updateState(state => {
-        state.projects = state.projects.filter(p => p.id !== id);
+        state.projects = state.projects.filter(p => String(p.id) !== String(id));
         StateCoordinator.logActivity('project', `Projet '${proj.name}' supprimé.`);
       }, ['projects']);
     }
