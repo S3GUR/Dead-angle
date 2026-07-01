@@ -130,39 +130,17 @@ class CalendarModuleClass {
     if (!grid) return;
     grid.innerHTML = '';
 
-    // Group tasks by date (supporting single legacy date or new multiple slots)
+    // Group tasks by date
     const tasksByDate = {};
     if (state.projects) {
       state.projects.forEach(project => {
         if (project.tasks) {
           project.tasks.forEach(task => {
-            // A. Single legacy schedule support
             if (task.scheduledDate) {
               if (!tasksByDate[task.scheduledDate]) {
                 tasksByDate[task.scheduledDate] = [];
               }
-              tasksByDate[task.scheduledDate].push({ 
-                project, 
-                task, 
-                time: task.scheduledTime || '', 
-                duration: parseFloat(task.scheduledDuration || 1) 
-              });
-            }
-            // B. Multi-slots scheduling support
-            if (task.scheduledSlots && Array.isArray(task.scheduledSlots)) {
-              task.scheduledSlots.forEach(slot => {
-                if (slot.date) {
-                  if (!tasksByDate[slot.date]) {
-                    tasksByDate[slot.date] = [];
-                  }
-                  tasksByDate[slot.date].push({ 
-                    project, 
-                    task, 
-                    time: slot.time || '', 
-                    duration: parseFloat(slot.duration || 1) 
-                  });
-                }
-              });
+              tasksByDate[task.scheduledDate].push({ project, task });
             }
           });
         }
@@ -209,7 +187,7 @@ class CalendarModuleClass {
         this.openScheduleModal(dateStr, '');
       };
 
-      const dayAllDayTasks = (tasksByDate[dateStr] || []).filter(({ time }) => !time);
+      const dayAllDayTasks = (tasksByDate[dateStr] || []).filter(({ task }) => !task.scheduledTime);
       this.renderAllDayTasks(allDayCell, dayAllDayTasks, dateStr);
       dayColumn.appendChild(allDayCell);
 
@@ -250,7 +228,7 @@ class CalendarModuleClass {
       };
 
       // C. Render timed tasks absolutely positioned inside the timeline body
-      const timedTasks = (tasksByDate[dateStr] || []).filter(({ time }) => time);
+      const timedTasks = (tasksByDate[dateStr] || []).filter(({ task }) => task.scheduledTime);
       this.renderTimedTasks(timelineBody, timedTasks, dateStr);
 
       dayColumn.appendChild(timelineBody);
@@ -261,24 +239,25 @@ class CalendarModuleClass {
   renderAllDayTasks(container, tasks, dateStr) {
     if (tasks.length === 0) return;
     
-    tasks.forEach(({ project, task, duration }) => {
-      const taskItem = this.createTaskBlock(project, task, dateStr, '', duration);
+    tasks.forEach(({ project, task }) => {
+      const taskItem = this.createTaskBlock(project, task, dateStr, '');
       taskItem.classList.add('all-day-block');
       container.appendChild(taskItem);
     });
   }
 
   renderTimedTasks(container, tasks, dateStr) {
-    tasks.forEach(({ project, task, time, duration }) => {
-      const [hours, minutes] = time.split(':').map(Number);
+    tasks.forEach(({ project, task }) => {
+      const [hours, minutes] = task.scheduledTime.split(':').map(Number);
       const startHourFloat = hours + minutes / 60;
       
       // Calculate start and end range
       if (startHourFloat >= this.startHour && startHourFloat <= this.endHour + 1) {
+        const duration = parseFloat(task.scheduledDuration || 1);
         const top = (startHourFloat - this.startHour) * this.hourHeight;
         const height = duration * this.hourHeight;
         
-        const block = this.createTaskBlock(project, task, dateStr, time, duration);
+        const block = this.createTaskBlock(project, task, dateStr, task.scheduledTime);
         block.style.position = 'absolute';
         block.style.top = `${top}px`;
         block.style.height = `${height}px`;
@@ -290,7 +269,7 @@ class CalendarModuleClass {
         if (duration >= 1) {
           const info = document.createElement('div');
           info.className = 'task-duration-info';
-          info.innerText = `${time} (${duration}h)`;
+          info.innerText = `${task.scheduledTime} (${duration}h)`;
           block.appendChild(info);
         }
 
@@ -299,10 +278,10 @@ class CalendarModuleClass {
     });
   }
 
-  createTaskBlock(project, task, dateStr, timeStr, duration) {
+  createTaskBlock(project, task, dateStr, timeStr) {
     const taskItem = document.createElement('div');
     taskItem.className = `calendar-task-item ${task.completed ? 'completed' : ''}`;
-    taskItem.title = `Projet: ${project.name}\nTâche: ${task.name}\nHeure: ${timeStr || 'Toute la journée'}${duration ? `\nDurée: ${duration}h` : ''}`;
+    taskItem.title = `Projet: ${project.name}\nTâche: ${task.name}\nHeure: ${timeStr || 'Toute la journée'}${task.scheduledDuration ? `\nDurée: ${task.scheduledDuration}h` : ''}`;
 
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
@@ -339,7 +318,7 @@ class CalendarModuleClass {
     unscheduleBtn.style.cssText = 'border: none; background: transparent; color: var(--text-dark); cursor: pointer; font-size: 1.1rem; padding: 0 2px; line-height: 1; margin-left: auto; display: flex; align-items: center; justify-content: center;';
     unscheduleBtn.onclick = (e) => {
       e.stopPropagation();
-      this.unscheduleTask(project.id, task.id, dateStr, timeStr);
+      this.unscheduleTask(project.id, task.id);
     };
     taskItem.appendChild(unscheduleBtn);
 
@@ -364,23 +343,17 @@ class CalendarModuleClass {
     }, ['projects']);
   }
 
-  unscheduleTask(projectId, taskId, date, time) {
+  unscheduleTask(projectId, taskId) {
     if (confirm("Voulez-vous retirer cette planification du calendrier ?")) {
       StateCoordinator.updateState(state => {
         const proj = state.projects.find(p => String(p.id) === String(projectId));
         if (proj && proj.tasks) {
           const task = proj.tasks.find(t => String(t.id) === String(taskId));
           if (task) {
-            // A. Remove legacy fields if they match
-            if (task.scheduledDate === date && task.scheduledTime === time) {
-              delete task.scheduledDate;
-              delete task.scheduledTime;
-              delete task.scheduledDuration;
-            }
-            // B. Remove matching slot from multi-slots
-            if (task.scheduledSlots && Array.isArray(task.scheduledSlots)) {
-              task.scheduledSlots = task.scheduledSlots.filter(s => !(s.date === date && s.time === time));
-            }
+            delete task.scheduledDate;
+            delete task.scheduledTime;
+            delete task.scheduledDuration;
+            if (task.scheduledSlots) delete task.scheduledSlots; // clean up if old slots exist
             StateCoordinator.logActivity('project', `Planification de '${task.name}' retirée.`);
           }
         }
@@ -448,12 +421,8 @@ class CalendarModuleClass {
 
     taskSelect.innerHTML = '<option value="">-- Sélectionnez la tâche --</option>';
     uncompletedTasks.forEach(t => {
-      let planText = '';
-      const slotsCount = (t.scheduledSlots ? t.scheduledSlots.length : 0) + (t.scheduledDate ? 1 : 0);
-      if (slotsCount > 0) {
-        planText = ` (${slotsCount} planifiée${slotsCount > 1 ? 's' : ''})`;
-      }
-      taskSelect.innerHTML += `<option value="${t.id}">${t.name}${planText}</option>`;
+      const statusText = t.scheduledDate ? ' (Déjà planifiée)' : '';
+      taskSelect.innerHTML += `<option value="${t.id}">${t.name}${statusText}</option>`;
     });
   }
 
@@ -474,28 +443,10 @@ class CalendarModuleClass {
         if (proj && proj.tasks) {
           const task = proj.tasks.find(t => String(t.id) === String(taskId));
           if (task) {
-            if (!task.scheduledSlots) {
-              task.scheduledSlots = [];
-            }
-
-            // Migrate legacy slot if present
-            if (task.scheduledDate) {
-              task.scheduledSlots.push({
-                date: task.scheduledDate,
-                time: task.scheduledTime || '',
-                duration: parseFloat(task.scheduledDuration || 1)
-              });
-              delete task.scheduledDate;
-              delete task.scheduledTime;
-              delete task.scheduledDuration;
-            }
-
-            // Append new slot
-            task.scheduledSlots.push({
-              date,
-              time: time || '',
-              duration
-            });
+            task.scheduledDate = date;
+            task.scheduledTime = time || '';
+            task.scheduledDuration = duration;
+            if (task.scheduledSlots) delete task.scheduledSlots; // clean up old slots array
 
             StateCoordinator.logActivity('project', `Tâche '${task.name}' planifiée sur le calendrier.`);
           }
@@ -525,15 +476,6 @@ class CalendarModuleClass {
           // Check legacy date alert
           if (task.scheduledDate === currentDateStr) {
             this.triggerAlertIfNeeded(project, task, task.scheduledTime, currentDateStr);
-          }
-
-          // Check multi-slots alerts
-          if (task.scheduledSlots && Array.isArray(task.scheduledSlots)) {
-            task.scheduledSlots.forEach(slot => {
-              if (slot.date === currentDateStr) {
-                this.triggerAlertIfNeeded(project, task, slot.time, currentDateStr);
-              }
-            });
           }
         });
       }
