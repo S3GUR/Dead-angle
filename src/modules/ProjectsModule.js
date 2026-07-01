@@ -6,6 +6,7 @@ class ProjectsModuleClass {
     this.currentProjectFilter = 'all';
     this.modalTasks = [];
     this.initialized = false;
+    this.expandedProjectIds = new Set();
   }
 
   init() {
@@ -90,7 +91,9 @@ class ProjectsModuleClass {
       const completedTasks = proj.tasks ? proj.tasks.filter(t => t.completed).length : 0;
       const totalTasks = proj.tasks ? proj.tasks.length : 0;
 
-      card.innerHTML = `
+        const isExpanded = this.expandedProjectIds.has(proj.id);
+
+        card.innerHTML = `
         <div class="project-card-header">
           <div>
             <h4 class="project-title">${proj.name}</h4>
@@ -126,11 +129,11 @@ class ProjectsModuleClass {
 
         <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
           <button class="card-tasks-toggle-btn" data-id="${proj.id}">
-            <i class="fa-solid fa-chevron-down"></i>
+            <i class="${isExpanded ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'}"></i>
             <span>Tâches (${completedTasks}/${totalTasks})</span>
           </button>
         </div>
-        <div class="card-tasks-wrapper" id="tasks-wrapper-${proj.id}">
+        <div class="card-tasks-wrapper ${isExpanded ? 'expanded' : ''}" id="tasks-wrapper-${proj.id}">
           <!-- Tasks list loaded dynamically below -->
         </div>
 
@@ -212,8 +215,10 @@ class ProjectsModuleClass {
         wrapper.classList.toggle('expanded');
         if (wrapper.classList.contains('expanded')) {
           icon.className = 'fa-solid fa-chevron-up';
+          this.expandedProjectIds.add(id);
         } else {
           icon.className = 'fa-solid fa-chevron-down';
+          this.expandedProjectIds.delete(id);
         }
       });
     });
