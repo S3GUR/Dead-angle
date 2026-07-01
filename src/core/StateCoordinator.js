@@ -1,5 +1,4 @@
 import { WinkDatabase } from './Database.js';
-import { debugLog } from './Utils.js';
 
 class StateCoordinatorClass {
   constructor() {
@@ -192,24 +191,18 @@ class StateCoordinatorClass {
   // Mutation helpers
   async updateState(mutationFn, tablesToSave = null) {
     try {
-      debugLog("updateState: mutating state", { tablesToSave });
       mutationFn(this.state);
       if (tablesToSave && Array.isArray(tablesToSave)) {
         for (const table of tablesToSave) {
-          debugLog(`updateState: saving table '${table}'`, this.state[table]);
           if (table === 'steamConfig' || table === 'enabledModules') {
             await this.db.saveSettings(this.state);
           } else {
             await this.db.saveTable(table, this.state[table]);
           }
-          debugLog(`updateState: saved table '${table}'`);
         }
       } else {
-        debugLog("updateState: saving full state");
         await this.db.saveState(this.state);
-        debugLog("updateState: saved full state");
       }
-      debugLog("updateState: notifying subscribers");
       this.notify();
     } catch (err) {
       alert("Erreur de base de données (updateState):\n" + err.message + "\n" + err.stack);

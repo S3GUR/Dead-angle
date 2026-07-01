@@ -1,5 +1,5 @@
 import { StateCoordinator } from '../core/StateCoordinator.js';
-import { formatMoney, debugLog } from '../core/Utils.js';
+import { formatMoney } from '../core/Utils.js';
 
 class ProjectsModuleClass {
   constructor() {
@@ -369,24 +369,17 @@ class ProjectsModuleClass {
       const budget = parseFloat(document.getElementById('project-budget').value) || 0;
       const deadline = document.getElementById('project-deadline').value;
 
-      debugLog("handleFormSubmit: start", { id, name, status, progress, modalTasks: this.modalTasks });
-
       if (this.modalTasks.length > 0) {
         const completedCount = this.modalTasks.filter(t => t.completed).length;
         progress = Math.round((completedCount / this.modalTasks.length) * 100);
       }
 
       StateCoordinator.updateState(state => {
-        debugLog("State mutation: projects in state", state.projects);
         if (id) {
           // Edit
           const idx = state.projects.findIndex(p => String(p.id) === String(id));
-          debugLog("State mutation: edit", { id, idx });
           if (idx !== -1) {
             state.projects[idx] = { ...state.projects[idx], name, description, status, progress, timeSpent, budget, deadline, tasks: this.modalTasks };
-            debugLog("State mutation: edit success", state.projects[idx]);
-          } else {
-            debugLog("State mutation: idx not found!", { id });
           }
         } else {
           // Add
@@ -402,7 +395,7 @@ class ProjectsModuleClass {
             tasks: this.modalTasks
           };
           state.projects.push(newProj);
-          debugLog("State mutation: added new project", newProj);
+          StateCoordinator.logActivity('project', `Projet '${name}' créé.`);
         }
       }, ['projects']);
 
