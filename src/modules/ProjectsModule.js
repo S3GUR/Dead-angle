@@ -358,48 +358,53 @@ class ProjectsModuleClass {
   }
 
   handleFormSubmit(e) {
-    e.preventDefault();
-    const id = document.getElementById('project-id').value;
-    const name = document.getElementById('project-name').value.trim();
-    const description = document.getElementById('project-desc').value.trim();
-    const status = document.getElementById('project-status').value;
-    let progress = parseInt(document.getElementById('project-progress').value) || 0;
-    const timeSpent = parseFloat(document.getElementById('project-time-spent').value) || 0;
-    const budget = parseFloat(document.getElementById('project-budget').value) || 0;
-    const deadline = document.getElementById('project-deadline').value;
+    try {
+      e.preventDefault();
+      const id = document.getElementById('project-id').value;
+      const name = document.getElementById('project-name').value.trim();
+      const description = document.getElementById('project-desc').value.trim();
+      const status = document.getElementById('project-status').value;
+      let progress = parseInt(document.getElementById('project-progress').value) || 0;
+      const timeSpent = parseFloat(document.getElementById('project-time-spent').value) || 0;
+      const budget = parseFloat(document.getElementById('project-budget').value) || 0;
+      const deadline = document.getElementById('project-deadline').value;
 
-    if (this.modalTasks.length > 0) {
-      const completedCount = this.modalTasks.filter(t => t.completed).length;
-      progress = Math.round((completedCount / this.modalTasks.length) * 100);
-    }
-
-    StateCoordinator.updateState(state => {
-      if (id) {
-        // Edit
-        const idx = state.projects.findIndex(p => String(p.id) === String(id));
-        if (idx !== -1) {
-          state.projects[idx] = { ...state.projects[idx], name, description, status, progress, timeSpent, budget, deadline, tasks: this.modalTasks };
-          StateCoordinator.logActivity('project', `Projet '${name}' mis à jour.`);
-        }
-      } else {
-        // Add
-        const newProj = {
-          id: 'proj-' + Date.now(),
-          name,
-          description,
-          status,
-          progress,
-          timeSpent,
-          budget,
-          deadline,
-          tasks: this.modalTasks
-        };
-        state.projects.push(newProj);
-        StateCoordinator.logActivity('project', `Projet '${name}' créé.`);
+      if (this.modalTasks.length > 0) {
+        const completedCount = this.modalTasks.filter(t => t.completed).length;
+        progress = Math.round((completedCount / this.modalTasks.length) * 100);
       }
-    }, ['projects']);
 
-    this.closeProjectModal();
+      StateCoordinator.updateState(state => {
+        if (id) {
+          // Edit
+          const idx = state.projects.findIndex(p => String(p.id) === String(id));
+          if (idx !== -1) {
+            state.projects[idx] = { ...state.projects[idx], name, description, status, progress, timeSpent, budget, deadline, tasks: this.modalTasks };
+            StateCoordinator.logActivity('project', `Projet '${name}' mis à jour.`);
+          }
+        } else {
+          // Add
+          const newProj = {
+            id: 'proj-' + Date.now(),
+            name,
+            description,
+            status,
+            progress,
+            timeSpent,
+            budget,
+            deadline,
+            tasks: this.modalTasks
+          };
+          state.projects.push(newProj);
+          StateCoordinator.logActivity('project', `Projet '${name}' créé.`);
+        }
+      }, ['projects']);
+
+      this.closeProjectModal();
+    } catch (err) {
+      alert("Erreur de sauvegarde: " + err.message + "\n" + err.stack);
+      console.error(err);
+    }
   }
 
   deleteProject(id) {
