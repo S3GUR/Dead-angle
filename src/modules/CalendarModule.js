@@ -1,4 +1,5 @@
 import { StateCoordinator } from '../core/StateCoordinator.js';
+import { debugLog } from '../core/Utils.js';
 
 class CalendarModuleClass {
   constructor() {
@@ -397,32 +398,44 @@ class CalendarModuleClass {
   }
 
   handleScheduleSubmit(e) {
-    e.preventDefault();
+    try {
+      e.preventDefault();
 
-    const projectId = document.getElementById('schedule-project-select').value;
-    const taskId = document.getElementById('schedule-task-select').value;
-    const date = document.getElementById('schedule-date').value;
-    const time = document.getElementById('schedule-time').value;
-    const duration = parseFloat(document.getElementById('schedule-duration').value) || 1;
+      const projectId = document.getElementById('schedule-project-select').value;
+      const taskId = document.getElementById('schedule-task-select').value;
+      const date = document.getElementById('schedule-date').value;
+      const time = document.getElementById('schedule-time').value;
+      const duration = parseFloat(document.getElementById('schedule-duration').value) || 1;
 
-    if (!projectId || !taskId || !date) return;
+      debugLog("handleScheduleSubmit: start", { projectId, taskId, date, time, duration });
 
-    StateCoordinator.updateState(state => {
-      const proj = state.projects.find(p => String(p.id) === String(projectId));
-      if (proj && proj.tasks) {
-        const task = proj.tasks.find(t => String(t.id) === String(taskId));
-        if (task) {
-          task.scheduledDate = date;
-          task.scheduledTime = time || '';
-          task.scheduledDuration = duration;
-          
-          StateCoordinator.logActivity('project', `Tâche '${task.name}' planifiée pour le ${date} ${time ? `à ${time}` : ''} pour ${duration}h.`);
-        }
+      if (!projectId || !taskId || !date) {
+        debugLog("handleScheduleSubmit: missing fields!", { projectId, taskId, date });
+        return;
       }
-    }, ['projects']);
 
-    document.getElementById('schedule-task-modal').classList.remove('active');
-    document.getElementById('schedule-task-form').reset();
+      StateCoordinator.updateState(state => {
+        debugLog("Schedule mutation: projects in state", state.projects);
+        const proj = state.projects.find(p => String(p.id) === String(projectId));
+        debugLog("Schedule mutation: project found", proj);
+        if (proj && proj.tasks) {
+          const task = proj.tasks.find(t => String(t.id) === String(taskId));
+          debugLog("Schedule mutation: task found", task);
+          if (task) {
+            task.scheduledDate = date;
+            task.scheduledTime = time || '';
+            task.scheduledDuration = duration;
+            debugLog("Schedule mutation: task updated successfully", task);
+          }
+        }
+      }, ['projects']);
+
+      document.getElementById('schedule-task-modal').classList.remove('active');
+      document.getElementById('schedule-task-form').reset();
+    } catch (err) {
+      alert("Erreur de planification: " + err.message + "\n" + err.stack);
+      console.error(err);
+    }
   }
 
   checkAlerts(state) {
