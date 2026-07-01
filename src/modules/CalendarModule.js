@@ -383,8 +383,14 @@ class CalendarModuleClass {
       return;
     }
 
+    const uncompletedTasks = proj.tasks.filter(t => !t.completed);
+    if (uncompletedTasks.length === 0) {
+      taskSelect.innerHTML = "<option value=''>Toutes les tâches de ce projet sont terminées</option>";
+      return;
+    }
+
     taskSelect.innerHTML = '<option value="">-- Sélectionnez la tâche --</option>';
-    proj.tasks.forEach(t => {
+    uncompletedTasks.forEach(t => {
       const statusText = t.scheduledDate ? ' (Déjà planifiée)' : '';
       taskSelect.innerHTML += `<option value="${t.id}">${t.name}${statusText}</option>`;
     });
