@@ -305,7 +305,8 @@ class StateCoordinatorClass {
     if (this.state.activities.length > 10) {
       this.state.activities.pop();
     }
-    this.putItem('activities', newActivity);
+    // Write directly to DB without triggering syncFromDatabase race conditions
+    this.db.put('activities', newActivity);
   }
 
   async logSystemError(type, message, details = '') {
@@ -320,7 +321,8 @@ class StateCoordinatorClass {
     if (this.state.systemLogs.length > 50) {
       this.state.systemLogs.pop();
     }
-    await this.putItem('systemLogs', newLog);
+    // Write directly to DB
+    await this.db.put('systemLogs', newLog);
   }
 }
 
