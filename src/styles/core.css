@@ -8,14 +8,14 @@
   --border-glass: rgba(255, 255, 255, 0.07);
   --border-glass-active: rgba(255, 255, 255, 0.15);
   
-  --primary: #9d4edd;
-  --primary-glow: rgba(157, 78, 221, 0.35);
+  --primary: #d4af37;
+  --primary-glow: rgba(212, 175, 55, 0.25);
   --secondary: #3a86c8;
   --secondary-glow: rgba(58, 134, 200, 0.35);
   
   --accent-cyan: #06b6d4;
-  --accent-purple: #c084fc;
-  --accent-pink: #f43f5e;
+  --accent-purple: #f3d060;
+  --accent-pink: #e5ba44;
   
   --success: #10b981;
   --success-glow: rgba(16, 185, 129, 0.2);
@@ -61,8 +61,8 @@
 body {
   background-color: var(--bg-dark);
   background-image: 
-    radial-gradient(circle at 10% 20%, rgba(157, 78, 221, 0.15) 0%, transparent 40%),
-    radial-gradient(circle at 90% 80%, rgba(58, 134, 200, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 10% 20%, rgba(212, 175, 55, 0.06) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(58, 134, 200, 0.1) 0%, transparent 40%),
     radial-gradient(circle at 50% 50%, rgba(8, 7, 17, 1) 0%, rgba(8, 7, 17, 0.95) 100%);
   background-attachment: fixed;
   color: var(--text-main);
@@ -78,7 +78,7 @@ body {
   left: 20%;
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, rgba(157, 78, 221, 0.12) 0%, rgba(0,0,0,0) 70%);
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.05) 0%, rgba(0,0,0,0) 70%);
   z-index: -1;
   pointer-events: none;
   filter: blur(80px);
@@ -146,13 +146,13 @@ body {
 }
 
 .glass-button.primary {
-  background: linear-gradient(135deg, var(--primary) 0%, rgba(157, 78, 221, 0.8) 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, rgba(212, 175, 55, 0.7) 100%);
   border: none;
   box-shadow: 0 4px 15px var(--primary-glow);
 }
 
 .glass-button.primary:hover {
-  background: linear-gradient(135deg, #af61ed 0%, var(--primary) 100%);
+  background: linear-gradient(135deg, #e9c358 0%, var(--primary) 100%);
   box-shadow: 0 6px 20px var(--primary-glow);
 }
 
@@ -188,7 +188,7 @@ body {
 
 .glass-input:focus, .glass-select:focus, .glass-textarea:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 10px rgba(157, 78, 221, 0.2);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
   background: rgba(8, 7, 17, 0.7);
 }
 
@@ -233,7 +233,7 @@ body {
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--border-glass-active);
-  box-shadow: 0 0 15px rgba(157, 78, 221, 0.12);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -243,22 +243,22 @@ body {
 .brand-icon-logo {
   width: 26px;
   height: 26px;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--accent-cyan) 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, #fff7d6 100%);
   -webkit-mask: url('../../logo.png') no-repeat center / contain;
   mask: url('../../logo.png') no-repeat center / contain;
-  filter: drop-shadow(0 0 4px rgba(157, 78, 221, 0.45));
+  filter: drop-shadow(0 0 4px rgba(212, 175, 55, 0.45));
   transition: var(--transition-smooth);
 }
 
 .brand:hover .brand-icon {
   border-color: var(--primary);
-  box-shadow: 0 0 20px rgba(157, 78, 221, 0.35);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.25);
   transform: translateY(-2px);
 }
 
 .brand:hover .brand-icon-logo {
-  background: linear-gradient(135deg, var(--accent-purple) 0%, #00f0ff 100%);
-  filter: drop-shadow(0 0 6px rgba(157, 78, 221, 0.7));
+  background: linear-gradient(135deg, var(--accent-purple) 0%, #ffea85 100%);
+  filter: drop-shadow(0 0 6px rgba(212, 175, 55, 0.6));
 }
 
 .brand-name {
@@ -304,14 +304,14 @@ body {
 
 .nav-item.active .nav-link {
   color: #fff;
-  background: rgba(157, 78, 221, 0.15);
-  border-color: rgba(157, 78, 221, 0.25);
-  box-shadow: inset 0 0 12px rgba(157, 78, 221, 0.1);
+  background: rgba(212, 175, 55, 0.12);
+  border-color: rgba(212, 175, 55, 0.2);
+  box-shadow: inset 0 0 12px rgba(212, 175, 55, 0.08);
 }
 
 .nav-item.active .nav-link i {
   color: var(--accent-purple);
-  text-shadow: 0 0 10px rgba(192, 132, 252, 0.5);
+  text-shadow: 0 0 10px rgba(243, 208, 96, 0.5);
 }
 
 .sidebar-footer {

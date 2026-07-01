@@ -40,7 +40,7 @@
 
 .finance-nav-btn.active {
   color: var(--accent-purple);
-  background: rgba(157, 78, 221, 0.1);
+  background: rgba(212, 175, 55, 0.1);
   font-weight: 600;
 }
 
@@ -85,7 +85,7 @@
 
 .finance-item-icon.bank { background: rgba(58, 134, 200, 0.15); color: var(--accent-cyan); }
 .finance-item-icon.savings { background: rgba(16, 185, 129, 0.15); color: var(--success); }
-.finance-item-icon.investment { background: rgba(157, 78, 221, 0.15); color: var(--accent-purple); }
+.finance-item-icon.investment { background: rgba(212, 175, 55, 0.15); color: var(--accent-purple); }
 .finance-item-icon.asset { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
 .finance-item-icon.payslip { background: rgba(244, 63, 94, 0.15); color: var(--accent-pink); }
 .finance-item-icon.other { background: rgba(255, 255, 255, 0.05); color: var(--text-muted); }
