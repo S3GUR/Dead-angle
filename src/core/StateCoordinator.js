@@ -117,8 +117,66 @@ class StateCoordinatorClass {
 
   async init() {
     await this.db.init();
+    await this.migrateFromLegacyDatabase();
     await this.migrateFromLocalStorage();
     await this.syncFromDatabase();
+  }
+
+  // Migrate data from old database name if present
+  async migrateFromLegacyDatabase() {
+    try {
+      const currentProjects = await this.db.getAll('projects');
+      if (currentProjects.length > 0) return; // Already populated
+
+      // Open old database via Dexie
+      const legacyDb = new Dexie('WinkDatabase');
+      legacyDb.version(1).stores({
+        settings: 'key',
+        projects: 'id',
+        finances: 'id',
+        recurringFlows: 'id',
+        payslips: 'id',
+        games: 'id, appId',
+        animes: 'id, malId',
+        activities: 'id',
+        systemLogs: 'id'
+      });
+
+      await legacyDb.open();
+      
+      const projects = await legacyDb.projects.toArray();
+      const finances = await legacyDb.finances.toArray();
+      const payslips = await legacyDb.payslips.toArray();
+      const recurringFlows = await legacyDb.recurringFlows.toArray();
+      const games = await legacyDb.games.toArray();
+      const animes = await legacyDb.animes.toArray();
+      const activities = await legacyDb.activities.toArray();
+      const systemLogs = await legacyDb.systemLogs.toArray();
+      const settings = await legacyDb.settings.toArray();
+
+      if (projects.length > 0 || finances.length > 0 || payslips.length > 0) {
+        console.log("Migration des données de WinkDatabase vers DeadAngleDatabase...");
+        
+        if (projects.length > 0) await this.db.bulkPut('projects', projects);
+        if (finances.length > 0) await this.db.bulkPut('finances', finances);
+        if (payslips.length > 0) await this.db.bulkPut('payslips', payslips);
+        if (recurringFlows.length > 0) await this.db.bulkPut('recurringFlows', recurringFlows);
+        if (games.length > 0) await this.db.bulkPut('games', games);
+        if (animes.length > 0) await this.db.bulkPut('animes', animes);
+        if (activities.length > 0) await this.db.bulkPut('activities', activities);
+        if (systemLogs.length > 0) await this.db.bulkPut('systemLogs', systemLogs);
+        
+        for (const item of settings) {
+          await this.db.put('settings', item);
+        }
+
+        console.log("Migration de la base de données réussie !");
+      }
+      
+      legacyDb.close();
+    } catch (e) {
+      console.warn("Pas de base de données legacy ou erreur de migration:", e);
+    }
   }
 
   // LocalStorage to IndexedDB migration logic
