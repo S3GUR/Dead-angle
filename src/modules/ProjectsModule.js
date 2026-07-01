@@ -90,6 +90,7 @@ class ProjectsModuleClass {
       const budgetText = proj.budget > 0 ? formatMoney(proj.budget) : 'Aucun';
       const completedTasks = proj.tasks ? proj.tasks.filter(t => t.completed).length : 0;
       const totalTasks = proj.tasks ? proj.tasks.length : 0;
+      const totalHours = proj.tasks ? proj.tasks.reduce((sum, t) => sum + (parseFloat(t.scheduledDuration) || 0), 0) : 0;
 
         const isExpanded = this.expandedProjectIds.has(proj.id);
 
@@ -115,7 +116,7 @@ class ProjectsModuleClass {
         <div class="project-details-mini">
           <div class="detail-item">
             <i class="fa-regular fa-clock"></i>
-            <span>Temps : <strong class="hours-val">${proj.timeSpent || 0} h</strong></span>
+            <span>Temps : <strong class="hours-val">${totalHours} h</strong></span>
           </div>
           <div class="detail-item">
             <i class="fa-solid fa-euro-sign"></i>
@@ -137,13 +138,7 @@ class ProjectsModuleClass {
           <!-- Tasks list loaded dynamically below -->
         </div>
 
-        <div class="project-card-footer" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.05);">
-          <div class="time-spent-input-group">
-            <button class="time-spent-btn dec-hours-btn" data-id="${proj.id}">-</button>
-            <span style="font-size:0.78rem; color:var(--text-muted); padding: 0 4px;">Heures</span>
-            <button class="time-spent-btn inc-hours-btn" data-id="${proj.id}">+</button>
-          </div>
-
+        <div class="project-card-footer" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: flex-end;">
           <div class="project-actions">
             <button class="action-btn edit-proj-btn" data-id="${proj.id}" title="Modifier">
               <i class="fa-solid fa-pen-to-square"></i>
@@ -175,21 +170,6 @@ class ProjectsModuleClass {
       } else {
         tasksWrapper.innerHTML = `<div style="font-size:0.75rem; color:var(--text-dark); text-align:center; padding:8px;">Aucune tâche définie.</div>`;
       }
-    });
-
-    // Add listeners inside container elements
-    container.querySelectorAll('.inc-hours-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const id = e.target.getAttribute('data-id');
-        this.adjustProjectHours(id, 1);
-      });
-    });
-
-    container.querySelectorAll('.dec-hours-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const id = e.target.getAttribute('data-id');
-        this.adjustProjectHours(id, -1);
-      });
     });
 
     container.querySelectorAll('.edit-proj-btn').forEach(btn => {
@@ -233,15 +213,6 @@ class ProjectsModuleClass {
     });
   }
 
-  adjustProjectHours(id, amount) {
-    StateCoordinator.updateState(state => {
-      const idx = state.projects.findIndex(p => String(p.id) === String(id));
-      if (idx !== -1) {
-        const current = parseFloat(state.projects[idx].timeSpent || 0);
-        state.projects[idx].timeSpent = Math.max(0, current + amount);
-      }
-    }, ['projects']);
-  }
 
   toggleCardTask(projId, taskId, checked) {
     StateCoordinator.updateState(state => {
@@ -276,7 +247,6 @@ class ProjectsModuleClass {
         document.getElementById('project-desc').value = proj.description || '';
         document.getElementById('project-status').value = proj.status;
         document.getElementById('project-progress').value = proj.progress;
-        document.getElementById('project-time-spent').value = proj.timeSpent || 0;
         document.getElementById('project-budget').value = proj.budget || 0;
         document.getElementById('project-deadline').value = proj.deadline || '';
         document.getElementById('project-modal-title').innerText = "Modifier le projet";
@@ -370,7 +340,7 @@ class ProjectsModuleClass {
       const description = document.getElementById('project-desc').value.trim();
       const status = document.getElementById('project-status').value;
       let progress = parseInt(document.getElementById('project-progress').value) || 0;
-      const timeSpent = parseFloat(document.getElementById('project-time-spent').value) || 0;
+      const timeSpent = this.modalTasks.reduce((sum, t) => sum + (parseFloat(t.scheduledDuration) || 0), 0);
       const budget = parseFloat(document.getElementById('project-budget').value) || 0;
       const deadline = document.getElementById('project-deadline').value;
 
