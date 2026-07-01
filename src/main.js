@@ -163,7 +163,7 @@ function refreshActiveView(tabId, state) {
 
 // App Initialization
 window.addEventListener('DOMContentLoaded', async () => {
-  console.log("Démarrage de l'application Wink...");
+  console.log("Démarrage de l'application Dead Angle...");
   
   // Initialise database and load state
   await StateCoordinator.init();

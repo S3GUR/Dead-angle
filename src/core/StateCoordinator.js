@@ -1,8 +1,8 @@
-import { WinkDatabase } from './Database.js';
+import { DeadAngleDatabase } from './Database.js';
 
 class StateCoordinatorClass {
   constructor() {
-    this.db = new WinkDatabase();
+    this.db = new DeadAngleDatabase();
     this.state = {};
     this.listeners = [];
     this.defaultState = {
@@ -64,7 +64,7 @@ class StateCoordinatorClass {
         {
           id: 'act-1',
           type: 'project',
-          text: "Création du projet 'Créer un tracker personnel (Wink)'",
+          text: "Créer un tracker personnel (Dead Angle)",
           time: 'Il y a 2 jours'
         },
         {
@@ -123,10 +123,10 @@ class StateCoordinatorClass {
 
   // LocalStorage to IndexedDB migration logic
   async migrateFromLocalStorage() {
-    const saved = localStorage.getItem('wink_state');
+    const saved = localStorage.getItem('dead_angle_state') || localStorage.getItem('wink_state');
     if (saved) {
       try {
-        console.log("Migration des données de LocalStorage vers IndexedDB en cours...");
+        console.log("Migration des données vers IndexedDB en cours...");
         const legacyState = JSON.parse(saved);
         
         // Save complete state to database
@@ -136,9 +136,10 @@ class StateCoordinatorClass {
         });
 
         // Backup legacy state just in case and remove from active key
-        localStorage.setItem('wink_state_backup', saved);
+        localStorage.setItem('dead_angle_state_backup', saved);
         localStorage.removeItem('wink_state');
-        console.log("Migration réussie. wink_state transféré vers IndexedDB et sauvegardé sous wink_state_backup.");
+        localStorage.removeItem('dead_angle_state');
+        console.log("Migration réussie.");
       } catch (e) {
         console.error("Erreur lors de la migration du LocalStorage :", e);
       }

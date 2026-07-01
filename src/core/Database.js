@@ -1,8 +1,8 @@
 /* global Dexie */
 
-export class WinkDatabase {
+export class DeadAngleDatabase {
   constructor() {
-    this.db = new Dexie('WinkDatabase');
+    this.db = new Dexie('DeadAngleDatabase');
     this.db.version(1).stores({
       settings: 'key',
       projects: 'id',

@@ -565,7 +565,7 @@ class CalendarModuleClass {
   }
 
   showToastAlert(title, text) {
-    const container = document.getElementById('wink-toast-container');
+    const container = document.getElementById('dead-angle-toast-container');
     if (!container) return;
 
     const toast = document.createElement('div');

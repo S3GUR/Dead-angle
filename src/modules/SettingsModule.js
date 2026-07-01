@@ -131,7 +131,7 @@ class SettingsModuleClass {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(StateCoordinator.state, null, 2));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", `wink_backup_${new Date().toISOString().slice(0,10)}.json`);
+    downloadAnchor.setAttribute("download", `dead_angle_backup_${new Date().toISOString().slice(0,10)}.json`);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
@@ -158,7 +158,7 @@ class SettingsModuleClass {
           // Force refresh
           window.location.reload();
         } else {
-          alert("Format de fichier invalide. Assurez-vous d'importer un fichier JSON valide généré par Wink.");
+          alert("Format de fichier invalide. Assurez-vous d'importer un fichier JSON valide généré par Dead Angle.");
         }
       } catch (err) {
         alert("Erreur de lecture du fichier : " + err.message);
@@ -171,6 +171,8 @@ class SettingsModuleClass {
     if (confirm("ATTENTION : Cette action supprimera définitivement l'ensemble de vos projets et données financières de ce navigateur. Voulez-vous continuer ?")) {
       localStorage.removeItem('wink_state');
       localStorage.removeItem('wink_state_backup');
+      localStorage.removeItem('dead_angle_state');
+      localStorage.removeItem('dead_angle_state_backup');
       await StateCoordinator.resetData();
       alert("L'application a été réinitialisée.");
       window.location.reload();
