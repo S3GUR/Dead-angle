@@ -339,6 +339,7 @@ body {
   justify-content: center;
   font-weight: 700;
   font-size: 0.9rem;
+  object-fit: cover;
 }
 
 .user-info {
