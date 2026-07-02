@@ -101,7 +101,8 @@ export class DeadAngleDatabase {
         // Settings metadata
         const settingsToSave = [
           { key: 'steamConfig', value: state.steamConfig || { apiKey: '', steamId: '' } },
-          { key: 'enabledModules', value: state.enabledModules || { finances: true, payslips: true, games: true, animes: true, calendar: true } }
+          { key: 'enabledModules', value: state.enabledModules || { finances: true, payslips: true, games: true, animes: true, calendar: true } },
+          { key: 'malUsername', value: state.malUsername || '' }
         ];
         await this.db.settings.bulkPut(settingsToSave);
       }
@@ -120,7 +121,8 @@ export class DeadAngleDatabase {
   async saveSettings(state) {
     const settingsToSave = [
       { key: 'steamConfig', value: state.steamConfig || { apiKey: '', steamId: '' } },
-      { key: 'enabledModules', value: state.enabledModules || { finances: true, payslips: true, games: true, animes: true, calendar: true } }
+      { key: 'enabledModules', value: state.enabledModules || { finances: true, payslips: true, games: true, animes: true, calendar: true } },
+      { key: 'malUsername', value: state.malUsername || '' }
     ];
     await this.db.settings.bulkPut(settingsToSave);
   }

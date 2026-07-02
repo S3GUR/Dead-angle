@@ -111,7 +111,8 @@ class StateCoordinatorClass {
           type: 'TV'
         }
       ],
-      systemLogs: []
+      systemLogs: [],
+      malUsername: ''
     };
   }
 
@@ -230,7 +231,8 @@ class StateCoordinatorClass {
         activities: dbData.activities || [],
         systemLogs: dbData.systemLogs || [],
         steamConfig: dbData.settings.steamConfig || { apiKey: '', steamId: '' },
-        enabledModules: dbData.settings.enabledModules || { finances: true, payslips: true, games: true, animes: true, calendar: true }
+        enabledModules: dbData.settings.enabledModules || { finances: true, payslips: true, games: true, animes: true, calendar: true },
+        malUsername: dbData.settings.malUsername || ''
       };
     }
   }
@@ -253,7 +255,7 @@ class StateCoordinatorClass {
       mutationFn(this.state);
       if (tablesToSave && Array.isArray(tablesToSave)) {
         for (const table of tablesToSave) {
-          if (table === 'steamConfig' || table === 'enabledModules') {
+          if (table === 'steamConfig' || table === 'enabledModules' || table === 'malUsername') {
             await this.db.saveSettings(this.state);
           } else {
             await this.db.saveTable(table, this.state[table]);
