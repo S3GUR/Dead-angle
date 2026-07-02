@@ -518,10 +518,25 @@ class AnimesModuleClass {
         const existingAnime = StateCoordinator.state.animes.find(a => a.malId === malId);
 
         let genres = '';
-        if (item.tags) {
-          genres = item.tags;
-        } else if (existingAnime && existingAnime.genres) {
+        if (existingAnime && existingAnime.genres) {
           genres = existingAnime.genres;
+        }
+
+        // Filter to purge old personal notes saved as genres
+        const officialGenres = [
+          "action", "adventure", "comedy", "drama", "fantasy", "horror",
+          "mystery", "romance", "sci-fi", "slice", "supernatural",
+          "suspense", "sports", "shounen", "shoujo", "seinen", "josei"
+        ];
+
+        let hasOfficialGenre = false;
+        if (genres) {
+          const lowerGenres = genres.toLowerCase();
+          hasOfficialGenre = officialGenres.some(official => lowerGenres.includes(official));
+        }
+
+        if (!genres || !hasOfficialGenre) {
+          genres = '';
         }
 
         let broadcastDay = existingAnime ? existingAnime.broadcastDay || '' : '';
@@ -565,7 +580,7 @@ class AnimesModuleClass {
             rating: score,
             status: statusVal,
             image: poster || existingAnime.image,
-            genres: genres || existingAnime.genres || '',
+            genres: genres,
             broadcastDay: broadcastDay,
             broadcastTime: broadcastTime
           });
@@ -581,7 +596,7 @@ class AnimesModuleClass {
             rating: score,
             status: statusVal,
             image: poster,
-            genres: genres || '',
+            genres: genres,
             broadcastDay: broadcastDay,
             broadcastTime: broadcastTime
           });

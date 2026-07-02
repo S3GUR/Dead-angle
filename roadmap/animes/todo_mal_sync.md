@@ -19,7 +19,7 @@ Ce fichier détaille les tâches pour l'importation automatique, la sauvegarde d
   - 4 -> `dropped` (Abandonné)
   - 6 -> `plan_to_watch` (À voir)
 - [ ] TODO : Mettre à jour les enregistrements existants (si même `malId`) ou les ajouter à la table `animes`.
-- [ ] TODO : Enregistrer les genres associés de chaque anime lors de l'importation (les données MAL renvoyées dans le JSON peuvent contenir des genres ou des tags ; s'ils sont présents, les stocker dans le champ `genres` sous forme de tableau de chaînes).
+- [ ] TODO : Enregistrer les genres officiels de chaque anime lors de l'importation. Attention : ne pas utiliser les tags MyAnimeList (qui correspondent aux notes et commentaires personnels de l'utilisateur sur son profil MAL, ex: "classic shonen") comme genres. Les genres officiels doivent provenir exclusivement de l'API Jikan ou d'une saisie manuelle de l'utilisateur.
 
 ## 🧪 Critères d'acceptation (pour QATester)
 - **QA-ANIME-SYNC-1** : Si aucun pseudo MAL n'est enregistré dans les paramètres, le bouton "Actualiser MAL" doit être invisible sur l'interface.
