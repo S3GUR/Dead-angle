@@ -63,7 +63,7 @@ const tabConfigs = {
     btnAction: () => SettingsModule.exportData()
   },
   calendar: {
-    title: "Calendrier de Vie",
+    title: "Calendrier",
     subtitle: "Planifiez les tâches de vos projets sur votre calendrier interactif",
     btnText: "Planifier une tâche",
     btnAction: () => CalendarModule.openScheduleModal()
