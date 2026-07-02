@@ -67,10 +67,10 @@ class SettingsModuleClass {
     const togglePayslips = document.getElementById('module-toggle-payslips');
     const toggleGaming = document.getElementById('module-toggle-games');
     const toggleAnimes = document.getElementById('module-toggle-animes');
-
     const toggleCalendar = document.getElementById('module-toggle-calendar');
+    const toggleNews = document.getElementById('module-toggle-news');
 
-    const config = state.enabledModules || { finances: true, payslips: true, games: true, animes: true, calendar: true };
+    const config = state.enabledModules || { finances: true, payslips: true, games: true, animes: true, calendar: true, news: true };
 
     if (toggleFinances) {
       toggleFinances.checked = config.finances !== false;
@@ -91,6 +91,10 @@ class SettingsModuleClass {
     if (toggleCalendar) {
       toggleCalendar.checked = config.calendar !== false;
       toggleCalendar.onchange = (e) => this.updateModuleToggle('calendar', e.target.checked);
+    }
+    if (toggleNews) {
+      toggleNews.checked = config.news !== false;
+      toggleNews.onchange = (e) => this.updateModuleToggle('news', e.target.checked);
     }
 
     const toggleAnimeSync = document.getElementById('anime-release-sync-toggle');
@@ -118,14 +122,15 @@ class SettingsModuleClass {
   }
 
   updateNavigationModules(state) {
-    const config = state.enabledModules || { finances: true, payslips: true, games: true, animes: true, calendar: true };
+    const config = state.enabledModules || { finances: true, payslips: true, games: true, animes: true, calendar: true, news: true };
     
     const tabs = {
       finances: document.querySelector('.nav-item[data-tab="finances"]'),
       payslips: document.querySelector('.nav-item[data-tab="payslips"]'),
       games: document.querySelector('.nav-item[data-tab="games"]'),
       animes: document.querySelector('.nav-item[data-tab="animes"]'),
-      calendar: document.querySelector('.nav-item[data-tab="calendar"]')
+      calendar: document.querySelector('.nav-item[data-tab="calendar"]'),
+      news: document.querySelector('.nav-item[data-tab="news"]')
     };
 
     Object.keys(tabs).forEach(key => {

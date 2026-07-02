@@ -79,6 +79,12 @@
             <span>Taux & Épargne</span>
           </a>
         </li>
+        <li class="nav-item" data-tab="news">
+          <a class="nav-link">
+            <i class="fa-solid fa-newspaper"></i>
+            <span>Infos</span>
+          </a>
+        </li>
         <li class="nav-item" data-tab="settings">
           <a class="nav-link">
             <i class="fa-solid fa-sliders"></i>
@@ -544,6 +550,50 @@
       </section>
 
       <!-- ============================================== -->
+      <!-- TAB: NEWS                                      -->
+      <!-- ============================================== -->
+      <section id="tab-news" class="tab-panel">
+        <div class="news-container glass-panel">
+          <div class="news-filter-bar" id="news-filter-bar" style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; border-bottom: 1px solid var(--border-glass); padding-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="color: var(--text-muted); font-size: 0.85rem;"><i class="fa-solid fa-earth-americas"></i> Pays :</span>
+                <select id="news-country-select" class="glass-input" style="padding: 6px 12px; font-size: 0.85rem; height: auto; width: auto;">
+                  <option value="fr">France</option>
+                  <option value="us">États-Unis</option>
+                  <option value="global">Monde / Global</option>
+                </select>
+              </div>
+              
+              <div style="display: flex; align-items: center; gap: 12px; margin-left: 8px;" id="news-agent-filters">
+                <span style="color: var(--text-muted); font-size: 0.85rem;"><i class="fa-solid fa-filter"></i> Experts :</span>
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: #fff; font-size: 0.85rem;">
+                  <input type="checkbox" id="news-filter-finance" class="card-task-checkbox" style="width: 14px; height: 14px; position: static; opacity: 1; pointer-events: auto;" checked>
+                  <span>Finance</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: #fff; font-size: 0.85rem;">
+                  <input type="checkbox" id="news-filter-tech" class="card-task-checkbox" style="width: 14px; height: 14px; position: static; opacity: 1; pointer-events: auto;" checked>
+                  <span>High-Tech</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: #fff; font-size: 0.85rem;">
+                  <input type="checkbox" id="news-filter-general" class="card-task-checkbox" style="width: 14px; height: 14px; position: static; opacity: 1; pointer-events: auto;" checked>
+                  <span>Général</span>
+                </label>
+              </div>
+            </div>
+            
+            <button class="glass-button primary" id="news-refresh-btn" style="padding: 8px 16px; font-size: 0.85rem; height: auto;">
+              <i class="fas fa-sync-alt" id="news-refresh-icon"></i> <span id="news-refresh-text">Actualiser à la demande</span>
+            </button>
+          </div>
+          
+          <div id="news-articles-grid" class="news-grid">
+            <!-- News cards injected dynamically -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================== -->
       <!-- TAB 6: SETTINGS & DATA                         -->
       <!-- ============================================== -->
       <section id="tab-settings" class="tab-panel">
@@ -647,6 +697,10 @@
                 <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; color: #fff; font-size: 0.95rem;">
                   <input type="checkbox" id="module-toggle-calendar" class="card-task-checkbox" style="width: 18px; height: 18px; position: static; opacity: 1; pointer-events: auto;" checked>
                   <span>Calendrier de Tâches & Projets</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; color: #fff; font-size: 0.95rem;">
+                  <input type="checkbox" id="module-toggle-news" class="card-task-checkbox" style="width: 18px; height: 18px; position: static; opacity: 1; pointer-events: auto;" checked>
+                  <span>Infos Récentes (News)</span>
                 </label>
               </div>
               

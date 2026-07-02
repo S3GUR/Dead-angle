@@ -67,6 +67,16 @@ class AnimesModuleClass {
   render(state) {
     this.init();
 
+    // Start background enrichment queue if there are imported animes without genres
+    if (!this.backgroundQueueStarted && state.animes && state.animes.length > 0) {
+      this.backgroundQueueStarted = true;
+      const needEnrich = state.animes.filter(a => a.malId && a.status !== 'watching' && !a.genres);
+      if (needEnrich.length > 0) {
+        const toEnrich = needEnrich.map(a => ({ id: a.id, malId: a.malId, name: a.name }));
+        this.processBackgroundQueue(toEnrich);
+      }
+    }
+
     const animesGrid = document.getElementById('animes-grid');
     if (!animesGrid) return;
     
@@ -493,6 +503,7 @@ class AnimesModuleClass {
       };
 
       const updatedAnimes = [];
+      const animesToEnrichBackground = [];
 
       for (const item of malData) {
         const malId = String(item.anime_id);
@@ -516,9 +527,10 @@ class AnimesModuleClass {
         let broadcastDay = existingAnime ? existingAnime.broadcastDay || '' : '';
         let broadcastTime = existingAnime ? existingAnime.broadcastTime || '' : '';
 
-        const needJikan = (statusVal === 'watching') || (!genres && malId);
+        const needJikan = (statusVal === 'watching') && malId;
+        const animeId = existingAnime ? existingAnime.id : ('anime-' + Date.now() + '-' + malId);
 
-        if (needJikan && malId) {
+        if (needJikan) {
           try {
             await new Promise(resolve => setTimeout(resolve, 1000));
             const response = await fetch(`https://api.jikan.moe/v4/anime/${malId}`);
@@ -539,6 +551,11 @@ class AnimesModuleClass {
           }
         }
 
+        // Add to background queue if not watching and has no genres yet
+        if (statusVal !== 'watching' && !genres && malId) {
+          animesToEnrichBackground.push({ id: animeId, malId, name });
+        }
+
         if (existingAnime) {
           updatedAnimes.push({
             ...existingAnime,
@@ -555,7 +572,7 @@ class AnimesModuleClass {
           updated++;
         } else {
           updatedAnimes.push({
-            id: 'anime-' + Date.now() + '-' + malId,
+            id: animeId,
             name,
             malId,
             type,
@@ -583,6 +600,12 @@ class AnimesModuleClass {
       if (!isSyncButton) {
         this.closeImportModal();
       }
+
+      // Start background enrichment queue if there are items to enrich
+      if (animesToEnrichBackground.length > 0) {
+        this.processBackgroundQueue(animesToEnrichBackground);
+      }
+
     } catch (err) {
       console.error(err);
       StateCoordinator.logSystemError('mal-import-error', "Erreur MyAnimeList", err.message);
@@ -593,6 +616,74 @@ class AnimesModuleClass {
         btn.innerHTML = isSyncButton ? originalHtml : "Lancer l'importation";
       }
     }
+  }
+
+  async processBackgroundQueue(animesToEnrich) {
+    if (this.isProcessingQueue) {
+      if (!this.backgroundQueue) this.backgroundQueue = [];
+      animesToEnrich.forEach(item => {
+        if (!this.backgroundQueue.some(q => q.malId === item.malId)) {
+          this.backgroundQueue.push(item);
+        }
+      });
+      return;
+    }
+
+    this.backgroundQueue = [...animesToEnrich];
+    if (this.backgroundQueue.length === 0) return;
+
+    this.isProcessingQueue = true;
+    console.log(`[Background Queue] Lancement de la file d'attente asynchrone pour enrichir ${this.backgroundQueue.length} animes...`);
+
+    while (this.backgroundQueue.length > 0) {
+      const item = this.backgroundQueue.shift();
+      
+      // Delay to avoid hitting Jikan API rate limit (60 requests/minute -> 1 per 3 seconds is safe)
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
+      try {
+        console.log(`[Background Queue] Requête Jikan pour l'anime : ${item.name} (MAL ID: ${item.malId})`);
+        const response = await fetch(`https://api.jikan.moe/v4/anime/${item.malId}`);
+        if (response.ok) {
+          const result = await response.json();
+          if (result && result.data) {
+            let genres = '';
+            let broadcastDay = '';
+            let broadcastTime = '';
+            if (result.data.genres) {
+              genres = result.data.genres.map(g => g.name).join(', ');
+            }
+            if (result.data.broadcast) {
+              broadcastDay = result.data.broadcast.day || '';
+              broadcastTime = result.data.broadcast.time || '';
+            }
+
+            // Update in coordinator state and commit targeted write to DB
+            await StateCoordinator.updateState(state => {
+              const anime = state.animes.find(a => a.id === item.id);
+              if (anime) {
+                anime.genres = genres;
+                anime.broadcastDay = broadcastDay;
+                anime.broadcastTime = broadcastTime;
+              }
+            }, ['animes']);
+            console.log(`[Background Queue] Enrichi avec succès : ${item.name} (${genres})`);
+          }
+        } else if (response.status === 429) {
+          console.warn(`[Background Queue] Erreur 429 (Too Many Requests) pour MAL ID ${item.malId}. Réinsertion dans la file d'attente.`);
+          this.backgroundQueue.unshift(item);
+          // Wait longer if we got rate limited
+          await new Promise(resolve => setTimeout(resolve, 5000));
+        } else {
+          console.error(`[Background Queue] Erreur Jikan pour MAL ID ${item.malId}: Status ${response.status}`);
+        }
+      } catch (err) {
+        console.error(`[Background Queue] Échec pour MAL ID ${item.malId}`, err);
+      }
+    }
+
+    this.isProcessingQueue = false;
+    console.log(`[Background Queue] File d'attente asynchrone terminée.`);
   }
 }
 

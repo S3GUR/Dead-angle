@@ -8,6 +8,7 @@ import { GamingModule } from './modules/GamingModule.js';
 import { AnimesModule } from './modules/AnimesModule.js';
 import { SettingsModule } from './modules/SettingsModule.js';
 import { CalendarModule } from './modules/CalendarModule.js';
+import { NewsModule } from './modules/NewsModule.js';
 
 const tabConfigs = {
   dashboard: {
@@ -67,6 +68,10 @@ const tabConfigs = {
     subtitle: "Planifiez les tâches de vos projets sur votre calendrier interactif",
     btnText: "Planifier une tâche",
     btnAction: () => CalendarModule.openScheduleModal()
+  },
+  news: {
+    title: "Infos Récentes",
+    subtitle: "Actualités ciblées et résumées par nos agents experts IA"
   }
 };
 
@@ -109,7 +114,7 @@ function switchTab(tabId) {
     
     // Update action button
     if (headerActionBtn) {
-      if (tabId === 'rates' || tabId === 'settings') {
+      if (tabId === 'rates' || tabId === 'settings' || tabId === 'news') {
         headerActionBtn.style.display = 'none';
       } else {
         headerActionBtn.style.display = 'inline-flex';
@@ -158,6 +163,9 @@ function refreshActiveView(tabId, state) {
     case 'calendar':
       CalendarModule.render(state);
       break;
+    case 'news':
+      NewsModule.render(state);
+      break;
   }
 }
 
@@ -167,6 +175,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   
   // Initialise database and load state
   await StateCoordinator.init();
+  window.db = StateCoordinator.db.db;
 
   // Bind side-nav items clicks
   const navItems = document.querySelectorAll('.nav-item');

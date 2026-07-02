@@ -85,7 +85,8 @@ class StateCoordinatorClass {
         payslips: true,
         games: true,
         animes: true,
-        calendar: true
+        calendar: true,
+        news: true
       },
       animes: [
         {
@@ -116,7 +117,8 @@ class StateCoordinatorClass {
       settings: {
         syncAnimeReleases: false
       },
-      dayNotes: []
+      dayNotes: [],
+      newsArticles: []
     };
   }
 
@@ -220,7 +222,8 @@ class StateCoordinatorClass {
       dbData.payslips.length === 0 &&
       dbData.games.length === 0 &&
       dbData.animes.length === 0 &&
-      dbData.dayNotes.length === 0
+      dbData.dayNotes.length === 0 &&
+      (!dbData.newsArticles || dbData.newsArticles.length === 0)
     ) {
       console.log("Base de données vide. Initialisation avec le DEFAULT_STATE...");
       await this.db.saveState(this.defaultState);
@@ -236,11 +239,31 @@ class StateCoordinatorClass {
         activities: dbData.activities || [],
         systemLogs: dbData.systemLogs || [],
         steamConfig: dbData.settings.steamConfig || { apiKey: '', steamId: '' },
-        enabledModules: dbData.settings.enabledModules || { finances: true, payslips: true, games: true, animes: true, calendar: true },
+        enabledModules: dbData.settings.enabledModules || { finances: true, payslips: true, games: true, animes: true, calendar: true, news: true },
         malUsername: dbData.settings.malUsername || '',
         settings: dbData.settings.settings || { syncAnimeReleases: false },
-        dayNotes: dbData.dayNotes || []
+        dayNotes: dbData.dayNotes || [],
+        newsArticles: dbData.newsArticles || []
       };
+    }
+  }
+
+  async saveNewsArticles(articles) {
+    if (!articles || articles.length === 0) return;
+    await this.db.bulkPut('newsArticles', articles);
+    await this.syncFromDatabase();
+    this.notify();
+  }
+
+  async cleanExpiredNews() {
+    try {
+      const limitDate = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+      // On supprime directement dans Dexie les articles de plus de 48h
+      await this.db.db.newsArticles.where('fetchedAt').below(limitDate).delete();
+      await this.syncFromDatabase();
+      this.notify();
+    } catch (err) {
+      console.error("Erreur lors du nettoyage automatique des news expirées:", err);
     }
   }
 
