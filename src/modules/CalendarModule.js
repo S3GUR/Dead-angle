@@ -1,5 +1,15 @@
 import { StateCoordinator } from '../core/StateCoordinator.js';
 
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 class CalendarModuleClass {
   constructor() {
     this.currentDate = new Date();
@@ -117,11 +127,25 @@ class CalendarModuleClass {
         const isToday = dateStr === todayStr;
         
         dayHeader.className = `header-day-col ${isToday ? 'today' : ''}`;
+        
+        const dayNote = (state.dayNotes || []).find(n => n.date === dateStr);
+        const noteContent = dayNote ? dayNote.content : '';
+
         dayHeader.innerHTML = `
           <span class="day-name">${dayNames[i]}</span>
           <span class="day-date-number">${date.getDate()}/${String(date.getMonth() + 1).padStart(2, '0')}</span>
+          <textarea class="day-note-textarea" data-date="${dateStr}" placeholder="Note...">${escapeHtml(noteContent)}</textarea>
         `;
         header.appendChild(dayHeader);
+
+        const textarea = dayHeader.querySelector('.day-note-textarea');
+        if (textarea) {
+          textarea.onblur = async (e) => {
+            const content = e.target.value.trim();
+            const dateVal = e.target.getAttribute('data-date');
+            await this.saveDayNote(dateVal, content);
+          };
+        }
       });
     }
 
@@ -183,12 +207,40 @@ class CalendarModuleClass {
       allDayCell.className = 'calendar-day-all-day-slot';
       allDayCell.style.height = '60px';
       allDayCell.onclick = (e) => {
-        if (e.target.closest('.calendar-task-item')) return;
+        if (e.target.closest('.calendar-task-item') || e.target.closest('.anime-release-event')) return;
         this.openScheduleModal(dateStr, '');
       };
 
       const dayAllDayTasks = (tasksByDate[dateStr] || []).filter(({ task }) => !task.scheduledTime);
       this.renderAllDayTasks(allDayCell, dayAllDayTasks, dateStr);
+
+      // Render Anime Releases if enabled
+      if (state.settings?.syncAnimeReleases && state.animes) {
+        const englishDays = ["Sundays", "Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays"];
+        const dayName = englishDays[date.getDay()];
+        
+        const matchingAnimes = state.animes.filter(anime => {
+          if (anime.status !== 'watching' || !anime.broadcastDay) return false;
+          const bd = anime.broadcastDay.toLowerCase().trim();
+          const dn = dayName.toLowerCase().trim();
+          return bd === dn || bd.startsWith(dn) || bd.includes(dn) || bd.includes(dn.slice(0, -1));
+        });
+
+        matchingAnimes.forEach(anime => {
+          const animeBlock = document.createElement('div');
+          animeBlock.className = 'anime-release-event';
+          animeBlock.style.cssText = 'pointer-events: none;'; // Non interactif
+          
+          const timeText = anime.broadcastTime ? ` à ${anime.broadcastTime}` : '';
+          animeBlock.innerHTML = `
+            <span class="anime-release-title" title="${escapeHtml(anime.name)}${escapeHtml(timeText)}">
+              <i class="fa-solid fa-circle-play"></i> ${escapeHtml(anime.name)}${escapeHtml(timeText)}
+            </span>
+          `;
+          allDayCell.appendChild(animeBlock);
+        });
+      }
+
       dayColumn.appendChild(allDayCell);
 
       // B. Hourly timeline block container
@@ -562,6 +614,24 @@ class CalendarModuleClass {
         setTimeout(() => toast.remove(), 300);
       }
     }, 10000);
+  }
+
+  async saveDayNote(date, content) {
+    await StateCoordinator.updateState(state => {
+      if (!state.dayNotes) state.dayNotes = [];
+      const idx = state.dayNotes.findIndex(n => n.date === date);
+      if (!content) {
+        if (idx !== -1) {
+          state.dayNotes.splice(idx, 1);
+        }
+      } else {
+        if (idx !== -1) {
+          state.dayNotes[idx].content = content;
+        } else {
+          state.dayNotes.push({ date, content });
+        }
+      }
+    }, ['dayNotes']);
   }
 }
 

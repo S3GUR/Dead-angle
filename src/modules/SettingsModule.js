@@ -92,6 +92,19 @@ class SettingsModuleClass {
       toggleCalendar.checked = config.calendar !== false;
       toggleCalendar.onchange = (e) => this.updateModuleToggle('calendar', e.target.checked);
     }
+
+    const toggleAnimeSync = document.getElementById('anime-release-sync-toggle');
+    if (toggleAnimeSync) {
+      toggleAnimeSync.checked = state.settings?.syncAnimeReleases === true;
+      toggleAnimeSync.onchange = (e) => this.updateAnimeSyncToggle(e.target.checked);
+    }
+  }
+
+  async updateAnimeSyncToggle(isChecked) {
+    await StateCoordinator.updateState(state => {
+      if (!state.settings) state.settings = {};
+      state.settings.syncAnimeReleases = isChecked;
+    }, ['settings']);
   }
 
   async updateModuleToggle(moduleKey, isChecked) {

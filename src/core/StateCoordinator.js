@@ -112,7 +112,11 @@ class StateCoordinatorClass {
         }
       ],
       systemLogs: [],
-      malUsername: ''
+      malUsername: '',
+      settings: {
+        syncAnimeReleases: false
+      },
+      dayNotes: []
     };
   }
 
@@ -215,7 +219,8 @@ class StateCoordinatorClass {
       dbData.finances.length === 0 &&
       dbData.payslips.length === 0 &&
       dbData.games.length === 0 &&
-      dbData.animes.length === 0
+      dbData.animes.length === 0 &&
+      dbData.dayNotes.length === 0
     ) {
       console.log("Base de données vide. Initialisation avec le DEFAULT_STATE...");
       await this.db.saveState(this.defaultState);
@@ -232,7 +237,9 @@ class StateCoordinatorClass {
         systemLogs: dbData.systemLogs || [],
         steamConfig: dbData.settings.steamConfig || { apiKey: '', steamId: '' },
         enabledModules: dbData.settings.enabledModules || { finances: true, payslips: true, games: true, animes: true, calendar: true },
-        malUsername: dbData.settings.malUsername || ''
+        malUsername: dbData.settings.malUsername || '',
+        settings: dbData.settings.settings || { syncAnimeReleases: false },
+        dayNotes: dbData.dayNotes || []
       };
     }
   }

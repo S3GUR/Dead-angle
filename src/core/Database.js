@@ -14,6 +14,18 @@ export class DeadAngleDatabase {
       activities: 'id',
       systemLogs: 'id'
     });
+    this.db.version(2).stores({
+      settings: 'key',
+      projects: 'id',
+      finances: 'id',
+      recurringFlows: 'id',
+      payslips: 'id',
+      games: 'id, appId',
+      animes: 'id, malId',
+      activities: 'id',
+      systemLogs: 'id',
+      dayNotes: '&date, content'
+    });
   }
 
   async init() {
@@ -51,6 +63,7 @@ export class DeadAngleDatabase {
     const animes = await this.getAll('animes');
     const activities = await this.getAll('activities');
     const systemLogs = await this.getAll('systemLogs');
+    const dayNotes = await this.getAll('dayNotes');
     
     // Load settings key-value entries
     const settingsArray = await this.getAll('settings');
@@ -68,14 +81,15 @@ export class DeadAngleDatabase {
       animes,
       activities,
       systemLogs,
-      settings
+      settings,
+      dayNotes
     };
   }
 
   // Save complete state (for backups/restores)
   async saveState(state) {
     await this.db.transaction('rw', 
-      [this.db.projects, this.db.finances, this.db.payslips, this.db.recurringFlows, this.db.games, this.db.animes, this.db.activities, this.db.systemLogs, this.db.settings], 
+      [this.db.projects, this.db.finances, this.db.payslips, this.db.recurringFlows, this.db.games, this.db.animes, this.db.activities, this.db.systemLogs, this.db.settings, this.db.dayNotes], 
       async () => {
         // Clear tables
         await this.db.projects.clear();
@@ -87,6 +101,7 @@ export class DeadAngleDatabase {
         await this.db.activities.clear();
         await this.db.systemLogs.clear();
         await this.db.settings.clear();
+        await this.db.dayNotes.clear();
 
         // Write new items
         if (state.projects) await this.db.projects.bulkPut(state.projects);
@@ -97,12 +112,14 @@ export class DeadAngleDatabase {
         if (state.animes) await this.db.animes.bulkPut(state.animes);
         if (state.activities) await this.db.activities.bulkPut(state.activities);
         if (state.systemLogs) await this.db.systemLogs.bulkPut(state.systemLogs);
+        if (state.dayNotes) await this.db.dayNotes.bulkPut(state.dayNotes);
 
         // Settings metadata
         const settingsToSave = [
           { key: 'steamConfig', value: state.steamConfig || { apiKey: '', steamId: '' } },
           { key: 'enabledModules', value: state.enabledModules || { finances: true, payslips: true, games: true, animes: true, calendar: true } },
-          { key: 'malUsername', value: state.malUsername || '' }
+          { key: 'malUsername', value: state.malUsername || '' },
+          { key: 'settings', value: state.settings || { syncAnimeReleases: false } }
         ];
         await this.db.settings.bulkPut(settingsToSave);
       }
@@ -122,7 +139,8 @@ export class DeadAngleDatabase {
     const settingsToSave = [
       { key: 'steamConfig', value: state.steamConfig || { apiKey: '', steamId: '' } },
       { key: 'enabledModules', value: state.enabledModules || { finances: true, payslips: true, games: true, animes: true, calendar: true } },
-      { key: 'malUsername', value: state.malUsername || '' }
+      { key: 'malUsername', value: state.malUsername || '' },
+      { key: 'settings', value: state.settings || { syncAnimeReleases: false } }
     ];
     await this.db.settings.bulkPut(settingsToSave);
   }

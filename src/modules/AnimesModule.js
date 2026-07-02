@@ -511,18 +511,31 @@ class AnimesModuleClass {
           genres = item.tags;
         } else if (existingAnime && existingAnime.genres) {
           genres = existingAnime.genres;
-        } else if (malId) {
+        }
+
+        let broadcastDay = existingAnime ? existingAnime.broadcastDay || '' : '';
+        let broadcastTime = existingAnime ? existingAnime.broadcastTime || '' : '';
+
+        const needJikan = (statusVal === 'watching') || (!genres && malId);
+
+        if (needJikan && malId) {
           try {
-            await new Promise(resolve => setTimeout(resolve, 350));
+            await new Promise(resolve => setTimeout(resolve, 1000));
             const response = await fetch(`https://api.jikan.moe/v4/anime/${malId}`);
             if (response.ok) {
               const result = await response.json();
-              if (result && result.data && result.data.genres) {
-                genres = result.data.genres.map(g => g.name).join(', ');
+              if (result && result.data) {
+                if (result.data.genres) {
+                  genres = result.data.genres.map(g => g.name).join(', ');
+                }
+                if (result.data.broadcast) {
+                  broadcastDay = result.data.broadcast.day || '';
+                  broadcastTime = result.data.broadcast.time || '';
+                }
               }
             }
           } catch (err) {
-            console.error("Error fetching genres from Jikan for ID " + malId, err);
+            console.error("Error fetching details from Jikan for ID " + malId, err);
           }
         }
 
@@ -535,7 +548,9 @@ class AnimesModuleClass {
             rating: score,
             status: statusVal,
             image: poster || existingAnime.image,
-            genres: genres || existingAnime.genres || ''
+            genres: genres || existingAnime.genres || '',
+            broadcastDay: broadcastDay,
+            broadcastTime: broadcastTime
           });
           updated++;
         } else {
@@ -549,7 +564,9 @@ class AnimesModuleClass {
             rating: score,
             status: statusVal,
             image: poster,
-            genres: genres || ''
+            genres: genres || '',
+            broadcastDay: broadcastDay,
+            broadcastTime: broadcastTime
           });
           added++;
         }
