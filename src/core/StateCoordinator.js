@@ -109,13 +109,16 @@ class StateCoordinatorClass {
           episodesTotal: 28,
           rating: 10,
           status: 'watching',
-          type: 'TV'
+          type: 'TV',
+          broadcastDay: 'Fridays',
+          broadcastTime: '23:00',
+          airingStartDate: '2026-06-26'
         }
       ],
       systemLogs: [],
       malUsername: '',
       settings: {
-        syncAnimeReleases: false
+        syncAnimeReleases: true
       },
       dayNotes: [],
       newsArticles: []

@@ -541,6 +541,7 @@ class AnimesModuleClass {
 
         let broadcastDay = existingAnime ? existingAnime.broadcastDay || '' : '';
         let broadcastTime = existingAnime ? existingAnime.broadcastTime || '' : '';
+        let airingStartDate = existingAnime ? existingAnime.airingStartDate || '' : '';
 
         const needJikan = (statusVal === 'watching') && malId;
         const animeId = existingAnime ? existingAnime.id : ('anime-' + Date.now() + '-' + malId);
@@ -558,6 +559,9 @@ class AnimesModuleClass {
                 if (result.data.broadcast) {
                   broadcastDay = result.data.broadcast.day || '';
                   broadcastTime = result.data.broadcast.time || '';
+                }
+                if (result.data.aired && result.data.aired.from) {
+                  airingStartDate = result.data.aired.from.substring(0, 10);
                 }
               }
             }
@@ -582,7 +586,8 @@ class AnimesModuleClass {
             image: poster || existingAnime.image,
             genres: genres,
             broadcastDay: broadcastDay,
-            broadcastTime: broadcastTime
+            broadcastTime: broadcastTime,
+            airingStartDate: airingStartDate
           });
           updated++;
         } else {
@@ -598,7 +603,8 @@ class AnimesModuleClass {
             image: poster,
             genres: genres,
             broadcastDay: broadcastDay,
-            broadcastTime: broadcastTime
+            broadcastTime: broadcastTime,
+            airingStartDate: airingStartDate
           });
           added++;
         }
@@ -665,12 +671,16 @@ class AnimesModuleClass {
             let genres = '';
             let broadcastDay = '';
             let broadcastTime = '';
+            let airingStartDate = '';
             if (result.data.genres) {
               genres = result.data.genres.map(g => g.name).join(', ');
             }
             if (result.data.broadcast) {
               broadcastDay = result.data.broadcast.day || '';
               broadcastTime = result.data.broadcast.time || '';
+            }
+            if (result.data.aired && result.data.aired.from) {
+              airingStartDate = result.data.aired.from.substring(0, 10);
             }
 
             // Update in coordinator state and commit targeted write to DB
@@ -680,6 +690,7 @@ class AnimesModuleClass {
                 anime.genres = genres;
                 anime.broadcastDay = broadcastDay;
                 anime.broadcastTime = broadcastTime;
+                anime.airingStartDate = airingStartDate;
               }
             }, ['animes']);
             console.log(`[Background Queue] Enrichi avec succès : ${item.name} (${genres})`);

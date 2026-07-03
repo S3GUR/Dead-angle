@@ -223,7 +223,30 @@ class CalendarModuleClass {
           if (anime.status !== 'watching' || !anime.broadcastDay) return false;
           const bd = anime.broadcastDay.toLowerCase().trim();
           const dn = dayName.toLowerCase().trim();
-          return bd === dn || bd.startsWith(dn) || bd.includes(dn) || bd.includes(dn.slice(0, -1));
+          if (!(bd === dn || bd.startsWith(dn) || bd.includes(dn) || bd.includes(dn.slice(0, -1)))) {
+            return false;
+          }
+
+          if (anime.airingStartDate) {
+            const parts = anime.airingStartDate.split('-');
+            if (parts.length === 3) {
+              const start = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+              const calDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+              if (calDate < start) {
+                return false;
+              }
+
+              const episodesTotal = parseInt(anime.episodesTotal, 10) || 0;
+              if (episodesTotal > 0) {
+                const end = new Date(start);
+                end.setDate(start.getDate() + (episodesTotal - 1) * 7);
+                if (calDate > end) {
+                  return false;
+                }
+              }
+            }
+          }
+          return true;
         });
 
         matchingAnimes.forEach(anime => {
