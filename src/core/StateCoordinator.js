@@ -121,7 +121,8 @@ class StateCoordinatorClass {
         syncAnimeReleases: true
       },
       dayNotes: [],
-      newsArticles: []
+      newsArticles: [],
+      appointments: []
     };
   }
 
@@ -226,7 +227,8 @@ class StateCoordinatorClass {
       dbData.games.length === 0 &&
       dbData.animes.length === 0 &&
       dbData.dayNotes.length === 0 &&
-      (!dbData.newsArticles || dbData.newsArticles.length === 0)
+      (!dbData.newsArticles || dbData.newsArticles.length === 0) &&
+      (!dbData.appointments || dbData.appointments.length === 0)
     ) {
       console.log("Base de données vide. Initialisation avec le DEFAULT_STATE...");
       await this.db.saveState(this.defaultState);
@@ -246,7 +248,8 @@ class StateCoordinatorClass {
         malUsername: dbData.settings.malUsername || '',
         settings: dbData.settings.settings || { syncAnimeReleases: false },
         dayNotes: dbData.dayNotes || [],
-        newsArticles: dbData.newsArticles || []
+        newsArticles: dbData.newsArticles || [],
+        appointments: dbData.appointments || []
       };
     }
   }

@@ -12,6 +12,8 @@ Ce fichier détaille les tâches pour planifier, modifier et interagir avec les 
 - [ ] TODO : Permettre de cocher/décocher la checkbox sur le bloc du calendrier pour mettre à jour la tâche et la progression du projet.
 - [ ] TODO : Proposer un bouton de suppression (`&times;`) pour déplanifier la tâche. Demander confirmation, puis retirer les propriétés de planification de la tâche.
 - [ ] TODO : Permettre de pré-remplir la date et l'heure dans la modale en cliquant sur une case vide du calendrier (arrondir au quart d'heure le plus proche).
+- [ ] TODO : Supprimer le bouton en doublon `#schedule-task-btn` de la barre d'outils du calendrier dans `index.html`. La planification s'effectuera exclusivement via le bouton du header dynamique (en haut à droite) ou par clic direct sur les cases de la grille du calendrier.
+- [ ] TODO : Dans `CalendarModule.js`, retirer toutes les liaisons d'événements et les références au bouton `#schedule-task-btn` pour éviter des erreurs lors du chargement du module.
 
 ## 🧪 Critères d'acceptation (pour QATester)
 - **QA-CAL-PLAN-1** : Cliquer sur la case vide du jeudi à 11h doit ouvrir la modale avec le jeudi pré-rempli et l'heure à `11:00`.

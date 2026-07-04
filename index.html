@@ -534,7 +534,6 @@
               <h2 id="calendar-current-week-title" class="calendar-month-title" style="min-width: 250px;">Semaine du...</h2>
               <button class="glass-button" id="next-week-btn">Semaine suivante <i class="fa-solid fa-chevron-right"></i></button>
             </div>
-            <button class="glass-button primary" id="schedule-task-btn"><i class="fa-solid fa-clock"></i> Planifier une tâche</button>
           </div>
           
           <div class="calendar-grid-header" id="calendar-week-header">
@@ -1196,23 +1195,49 @@
   <div class="modal-overlay" id="schedule-task-modal">
     <div class="modal-content glass-panel" style="max-width: 500px;">
       <div class="modal-header">
-        <h3 class="modal-title">Planifier une tâche sur le calendrier</h3>
+        <h3 class="modal-title">Planifier un événement / rendez-vous</h3>
         <button class="modal-close" onclick="document.getElementById('schedule-task-modal').classList.remove('active');">&times;</button>
       </div>
       <form id="schedule-task-form">
         <div class="modal-body">
           <div class="form-group">
-            <label for="schedule-project-select">Sélectionner un projet</label>
-            <select id="schedule-project-select" class="glass-select" required>
-              <!-- Options loaded dynamically -->
+            <label for="schedule-type-select">Type d'événement</label>
+            <select id="schedule-type-select" class="glass-select">
+              <option value="task" selected>Tâche de projet</option>
+              <option value="appointment">Rendez-vous libre / Événement</option>
             </select>
           </div>
-          <div class="form-group">
-            <label for="schedule-task-select">Sélectionner la tâche</label>
-            <select id="schedule-task-select" class="glass-select" required>
-              <option value="">-- Choisissez d'abord un projet --</option>
-            </select>
+
+          <div id="group-project-task">
+            <div class="form-group">
+              <label for="schedule-project-select">Sélectionner un projet</label>
+              <select id="schedule-project-select" class="glass-select" required>
+                <!-- Options loaded dynamically -->
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="schedule-task-select">Sélectionner la tâche</label>
+              <select id="schedule-task-select" class="glass-select" required>
+                <option value="">-- Choisissez d'abord un projet --</option>
+              </select>
+            </div>
           </div>
+
+          <div id="group-appointment-fields" style="display: none;">
+            <div class="form-group">
+              <label for="schedule-event-title">Titre</label>
+              <input type="text" id="schedule-event-title" class="glass-input" placeholder="Ex: Déjeuner d'affaires">
+            </div>
+            <div class="form-group">
+              <label for="schedule-event-location">Lieu</label>
+              <input type="text" id="schedule-event-location" class="glass-input" placeholder="Ex: Café de Flore (Optionnel)">
+            </div>
+            <div class="form-group">
+              <label for="schedule-event-notes">Notes / Informations</label>
+              <textarea id="schedule-event-notes" class="glass-input" placeholder="Notes ou informations (Optionnel)" style="height: 60px; resize: vertical;"></textarea>
+            </div>
+          </div>
+
           <div class="form-row" style="grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
             <div class="form-group">
               <label for="schedule-date">Date</label>

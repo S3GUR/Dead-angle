@@ -39,6 +39,20 @@ export class DeadAngleDatabase {
       dayNotes: '&date, content',
       newsArticles: '&id, country, agentType, fetchedAt'
     });
+    this.db.version(4).stores({
+      settings: 'key',
+      projects: 'id',
+      finances: 'id',
+      recurringFlows: 'id',
+      payslips: 'id',
+      games: 'id, appId',
+      animes: 'id, malId',
+      activities: 'id',
+      systemLogs: 'id',
+      dayNotes: '&date, content',
+      newsArticles: '&id, country, agentType, fetchedAt',
+      appointments: 'id, title, date, time, duration, location, notes'
+    });
   }
 
   async init() {
@@ -78,6 +92,7 @@ export class DeadAngleDatabase {
     const systemLogs = await this.getAll('systemLogs');
     const dayNotes = await this.getAll('dayNotes');
     const newsArticles = await this.getAll('newsArticles');
+    const appointments = await this.getAll('appointments');
     
     // Load settings key-value entries
     const settingsArray = await this.getAll('settings');
@@ -97,14 +112,15 @@ export class DeadAngleDatabase {
       systemLogs,
       settings,
       dayNotes,
-      newsArticles
+      newsArticles,
+      appointments
     };
   }
 
   // Save complete state (for backups/restores)
   async saveState(state) {
     await this.db.transaction('rw', 
-      [this.db.projects, this.db.finances, this.db.payslips, this.db.recurringFlows, this.db.games, this.db.animes, this.db.activities, this.db.systemLogs, this.db.settings, this.db.dayNotes, this.db.newsArticles], 
+      [this.db.projects, this.db.finances, this.db.payslips, this.db.recurringFlows, this.db.games, this.db.animes, this.db.activities, this.db.systemLogs, this.db.settings, this.db.dayNotes, this.db.newsArticles, this.db.appointments], 
       async () => {
         // Clear tables
         await this.db.projects.clear();
@@ -118,6 +134,7 @@ export class DeadAngleDatabase {
         await this.db.settings.clear();
         await this.db.dayNotes.clear();
         await this.db.newsArticles.clear();
+        await this.db.appointments.clear();
 
         // Write new items
         if (state.projects) await this.db.projects.bulkPut(state.projects);
@@ -130,6 +147,7 @@ export class DeadAngleDatabase {
         if (state.systemLogs) await this.db.systemLogs.bulkPut(state.systemLogs);
         if (state.dayNotes) await this.db.dayNotes.bulkPut(state.dayNotes);
         if (state.newsArticles) await this.db.newsArticles.bulkPut(state.newsArticles);
+        if (state.appointments) await this.db.appointments.bulkPut(state.appointments);
 
         // Settings metadata
         const settingsToSave = [

@@ -29,16 +29,16 @@ class CalendarModuleClass {
     if (prevBtn) prevBtn.onclick = () => this.changeWeek(-7);
     if (nextBtn) nextBtn.onclick = () => this.changeWeek(7);
 
-    // Schedule Task Modal trigger
-    const scheduleBtn = document.getElementById('schedule-task-btn');
-    if (scheduleBtn) {
-      scheduleBtn.onclick = () => this.openScheduleModal();
-    }
-
     // Modal select dependency
     const projSelect = document.getElementById('schedule-project-select');
     if (projSelect) {
       projSelect.onchange = (e) => this.loadProjectTasks(e.target.value);
+    }
+
+    // Schedule Type change handler
+    const typeSelect = document.getElementById('schedule-type-select');
+    if (typeSelect) {
+      typeSelect.onchange = (e) => this.handleScheduleTypeChange(e.target.value);
     }
 
     // Form submit
@@ -171,6 +171,19 @@ class CalendarModuleClass {
       });
     }
 
+    // Group appointments by date
+    const appointmentsByDate = {};
+    if (state.appointments) {
+      state.appointments.forEach(apt => {
+        if (apt.date) {
+          if (!appointmentsByDate[apt.date]) {
+            appointmentsByDate[apt.date] = [];
+          }
+          appointmentsByDate[apt.date].push(apt);
+        }
+      });
+    }
+
     // 1. RENDER HOUR COLUMN LABELS & TIMELINE BACKGROUND
     const hourLabelCol = document.createElement('div');
     hourLabelCol.className = 'hour-labels-column';
@@ -207,12 +220,15 @@ class CalendarModuleClass {
       allDayCell.className = 'calendar-day-all-day-slot';
       allDayCell.style.height = '60px';
       allDayCell.onclick = (e) => {
-        if (e.target.closest('.calendar-task-item') || e.target.closest('.anime-release-event')) return;
+        if (e.target.closest('.calendar-task-item') || e.target.closest('.anime-release-event') || e.target.closest('.appointment-event')) return;
         this.openScheduleModal(dateStr, '');
       };
 
       const dayAllDayTasks = (tasksByDate[dateStr] || []).filter(({ task }) => !task.scheduledTime);
       this.renderAllDayTasks(allDayCell, dayAllDayTasks, dateStr);
+
+      const dayAllDayAppointments = (appointmentsByDate[dateStr] || []).filter(apt => !apt.time);
+      this.renderAllDayAppointments(allDayCell, dayAllDayAppointments, dateStr);
 
       // Render Anime Releases if enabled
       if (state.settings?.syncAnimeReleases && state.animes) {
@@ -281,8 +297,9 @@ class CalendarModuleClass {
       }
 
       // Add click handler to timeline body to pre-fill specific time
+      // Add click handler to timeline body to pre-fill specific time
       timelineBody.onclick = (e) => {
-        if (e.target.closest('.calendar-task-item')) return;
+        if (e.target.closest('.calendar-task-item') || e.target.closest('.appointment-event')) return;
         const rect = timelineBody.getBoundingClientRect();
         const clickY = e.clientY - rect.top;
         const hourFloat = this.startHour + (clickY / this.hourHeight);
@@ -305,6 +322,9 @@ class CalendarModuleClass {
       // C. Render timed tasks absolutely positioned inside the timeline body
       const timedTasks = (tasksByDate[dateStr] || []).filter(({ task }) => task.scheduledTime);
       this.renderTimedTasks(timelineBody, timedTasks, dateStr);
+
+      const timedAppointments = (appointmentsByDate[dateStr] || []).filter(apt => apt.time);
+      this.renderTimedAppointments(timelineBody, timedAppointments, dateStr);
 
       dayColumn.appendChild(timelineBody);
       grid.appendChild(dayColumn);
@@ -440,6 +460,21 @@ class CalendarModuleClass {
     const modal = document.getElementById('schedule-task-modal');
     if (!modal) return;
 
+    // Reset type select to default
+    const typeSelect = document.getElementById('schedule-type-select');
+    if (typeSelect) {
+      typeSelect.value = 'task';
+      this.handleScheduleTypeChange('task');
+    }
+
+    // Clear appointment fields
+    const eventTitle = document.getElementById('schedule-event-title');
+    if (eventTitle) eventTitle.value = '';
+    const eventLocation = document.getElementById('schedule-event-location');
+    if (eventLocation) eventLocation.value = '';
+    const eventNotes = document.getElementById('schedule-event-notes');
+    if (eventNotes) eventNotes.value = '';
+
     // Populate project dropdown
     const projSelect = document.getElementById('schedule-project-select');
     if (projSelect) {
@@ -471,6 +506,30 @@ class CalendarModuleClass {
     }
 
     modal.classList.add('active');
+  }
+
+  handleScheduleTypeChange(type) {
+    const groupProjectTask = document.getElementById('group-project-task');
+    const groupAppointmentFields = document.getElementById('group-appointment-fields');
+    const projSelect = document.getElementById('schedule-project-select');
+    const taskSelect = document.getElementById('schedule-task-select');
+    const eventTitle = document.getElementById('schedule-event-title');
+
+    if (type === 'appointment') {
+      if (groupProjectTask) groupProjectTask.style.display = 'none';
+      if (groupAppointmentFields) groupAppointmentFields.style.display = 'block';
+      
+      if (projSelect) projSelect.required = false;
+      if (taskSelect) taskSelect.required = false;
+      if (eventTitle) eventTitle.required = true;
+    } else {
+      if (groupProjectTask) groupProjectTask.style.display = 'block';
+      if (groupAppointmentFields) groupAppointmentFields.style.display = 'none';
+      
+      if (projSelect) projSelect.required = true;
+      if (taskSelect) taskSelect.required = true;
+      if (eventTitle) eventTitle.required = false;
+    }
   }
 
   loadProjectTasks(projectId) {
@@ -505,34 +564,162 @@ class CalendarModuleClass {
     try {
       e.preventDefault();
 
-      const projectId = document.getElementById('schedule-project-select').value;
-      const taskId = document.getElementById('schedule-task-select').value;
+      const type = document.getElementById('schedule-type-select').value;
       const date = document.getElementById('schedule-date').value;
       const time = document.getElementById('schedule-time').value;
       const duration = parseFloat(document.getElementById('schedule-duration').value) || 1;
 
-      if (!projectId || !taskId || !date) return;
+      if (!date) return;
 
-      StateCoordinator.updateState(state => {
-        const proj = state.projects.find(p => String(p.id) === String(projectId));
-        if (proj && proj.tasks) {
-          const task = proj.tasks.find(t => String(t.id) === String(taskId));
-          if (task) {
-            task.scheduledDate = date;
-            task.scheduledTime = time || '';
-            task.scheduledDuration = duration;
-            if (task.scheduledSlots) delete task.scheduledSlots; // clean up old slots array
+      if (type === 'appointment') {
+        const title = document.getElementById('schedule-event-title').value.trim();
+        const location = document.getElementById('schedule-event-location').value.trim();
+        const notes = document.getElementById('schedule-event-notes').value.trim();
 
-            StateCoordinator.logActivity('project', `Tâche '${task.name}' planifiée sur le calendrier.`);
+        if (!title) return;
+
+        const newAppointment = {
+          id: 'apt-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+          title,
+          date,
+          time: time || '',
+          duration,
+          location: location || '',
+          notes: notes || ''
+        };
+
+        StateCoordinator.updateState(state => {
+          if (!state.appointments) state.appointments = [];
+          state.appointments.push(newAppointment);
+          StateCoordinator.logActivity('calendar', `Rendez-vous '${title}' planifié.`);
+        }, ['appointments']);
+
+      } else {
+        const projectId = document.getElementById('schedule-project-select').value;
+        const taskId = document.getElementById('schedule-task-select').value;
+
+        if (!projectId || !taskId) return;
+
+        StateCoordinator.updateState(state => {
+          const proj = state.projects.find(p => String(p.id) === String(projectId));
+          if (proj && proj.tasks) {
+            const task = proj.tasks.find(t => String(t.id) === String(taskId));
+            if (task) {
+              task.scheduledDate = date;
+              task.scheduledTime = time || '';
+              task.scheduledDuration = duration;
+              if (task.scheduledSlots) delete task.scheduledSlots; // clean up old slots array
+
+              StateCoordinator.logActivity('project', `Tâche '${task.name}' planifiée sur le calendrier.`);
+            }
           }
-        }
-      }, ['projects']);
+        }, ['projects']);
+      }
 
       document.getElementById('schedule-task-modal').classList.remove('active');
       document.getElementById('schedule-task-form').reset();
     } catch (err) {
       alert("Erreur de planification: " + err.message + "\n" + err.stack);
       console.error(err);
+    }
+  }
+
+  renderAllDayAppointments(container, appointments, dateStr) {
+    if (appointments.length === 0) return;
+    
+    appointments.forEach(appointment => {
+      const block = this.createAppointmentBlock(appointment, dateStr, '');
+      block.classList.add('all-day-block');
+      container.appendChild(block);
+    });
+  }
+
+  renderTimedAppointments(container, appointments, dateStr) {
+    appointments.forEach(appointment => {
+      const [hours, minutes] = appointment.time.split(':').map(Number);
+      const startHourFloat = hours + minutes / 60;
+      
+      if (startHourFloat >= this.startHour && startHourFloat <= this.endHour + 1) {
+        const duration = parseFloat(appointment.duration || 1);
+        const top = (startHourFloat - this.startHour) * this.hourHeight;
+        const height = duration * this.hourHeight;
+        
+        const block = this.createAppointmentBlock(appointment, dateStr, appointment.time);
+        block.style.position = 'absolute';
+        block.style.top = `${top}px`;
+        block.style.height = `${height}px`;
+        block.style.left = '4px';
+        block.style.right = '4px';
+        block.style.zIndex = '10';
+
+        if (duration >= 1) {
+          const info = document.createElement('div');
+          info.className = 'appointment-duration-info';
+          info.innerText = `${appointment.time} (${duration}h)`;
+          block.appendChild(info);
+        }
+
+        container.appendChild(block);
+      }
+    });
+  }
+
+  createAppointmentBlock(appointment, dateStr, timeStr) {
+    const block = document.createElement('div');
+    block.className = 'appointment-event';
+    
+    // Title
+    const titleEl = document.createElement('div');
+    titleEl.className = 'appointment-title';
+    titleEl.innerHTML = `<i class="fa-solid fa-calendar-day"></i> ${escapeHtml(appointment.title)}`;
+    block.appendChild(titleEl);
+
+    // Location
+    if (appointment.location) {
+      const locEl = document.createElement('div');
+      locEl.className = 'appointment-location';
+      locEl.innerHTML = `<i class="fa-solid fa-location-dot"></i> ${escapeHtml(appointment.location)}`;
+      block.appendChild(locEl);
+    }
+
+    // Notes
+    if (appointment.notes) {
+      const notesEl = document.createElement('div');
+      notesEl.className = 'appointment-notes';
+      notesEl.innerText = appointment.notes;
+      block.appendChild(notesEl);
+    }
+
+    // Tooltip
+    let tooltipText = `Rendez-vous: ${appointment.title}`;
+    if (timeStr) tooltipText += `\nHeure: ${timeStr}`;
+    else tooltipText += `\nHeure: Toute la journée`;
+    if (appointment.duration) tooltipText += `\nDurée: ${appointment.duration}h`;
+    if (appointment.location) tooltipText += `\nLieu: ${appointment.location}`;
+    if (appointment.notes) tooltipText += `\nNotes: ${appointment.notes}`;
+    block.title = tooltipText;
+
+    // Delete cross
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'delete-appointment-btn';
+    deleteBtn.innerHTML = '&times;';
+    deleteBtn.title = 'Supprimer ce rendez-vous';
+    deleteBtn.onclick = (e) => {
+      e.stopPropagation();
+      this.deleteAppointment(appointment.id);
+    };
+    block.appendChild(deleteBtn);
+
+    return block;
+  }
+
+  async deleteAppointment(appointmentId) {
+    if (confirm("Voulez-vous vraiment supprimer ce rendez-vous ?")) {
+      await StateCoordinator.updateState(state => {
+        if (state.appointments) {
+          state.appointments = state.appointments.filter(apt => apt.id !== appointmentId);
+        }
+      }, ['appointments']);
     }
   }
 
